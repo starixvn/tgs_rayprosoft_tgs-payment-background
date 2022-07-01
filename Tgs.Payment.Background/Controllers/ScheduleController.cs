@@ -31,7 +31,29 @@ public class ScheduleController : ControllerBase
 			.AsTask();
 	}
 
+	[HttpPost("agent", Name = "QueueProcessAgentPaymentStatisticsJob")]
+	[SuccessStatusCode(202)]
+	public void QueueProcessAgentPaymentStatisticsJob(
+		[FromServices] IMessageSender messageSender)
+	{
+		var currentDate = DateOnly.FromDateTime(DateTimeOffset.Now
+			.ToOffset(TimeSpan.FromHours(8D))
+			.DateTime);
+
+		var request = new ProcessRequest
+		{
+			ProcessDate = currentDate
+		};
+
+		_ = messageSender
+			.SendAsync(
+				"tgs.payment.background.agent",
+				request.ToByteArray())
+			.AsTask();
+	}
+
 	[HttpPost("player/{processDate}", Name = "QueueProcessPlayerPaymentStatisticsJobWithProcessDate")]
+	[SuccessStatusCode(202)]
 	public void QueueProcessPlayerPaymentStatisticsJobWithProcessDate(
 		[FromServices] IMessageSender messageSender,
 		DateOnly processDate)
@@ -44,6 +66,24 @@ public class ScheduleController : ControllerBase
 		_ = messageSender
 			.SendAsync(
 				"tgs.payment.background.player",
+				request.ToByteArray())
+			.AsTask();
+	}
+
+	[HttpPost(template: "agent/{processDate}", Name = "QueueProcessAgentPaymentStatisticsJobWithProcessDate")]
+	[SuccessStatusCode(202)]
+	public void QueueProcessAgentPaymentStatisticsJobWithProcessDate(
+		[FromServices] IMessageSender messageSender,
+		DateOnly processDate)
+	{
+		var request = new ProcessRequest
+		{
+			ProcessDate = processDate
+		};
+
+		_ = messageSender
+			.SendAsync(
+				"tgs.payment.background.agent",
 				request.ToByteArray())
 			.AsTask();
 	}

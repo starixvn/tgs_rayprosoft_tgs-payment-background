@@ -49,7 +49,8 @@ builder.Services
 
 			options.Url = config.GetConnectionString("Nats");
 		})
-		.AddReplyHandler<PlayerDailyPaymentHandler>("tgs.payment.background.player", "tgs.payment.background.player"))
+		.AddReplyHandler<PlayerDailyPaymentHandler>("tgs.payment.background.player", "tgs.payment.background.player")
+		.AddReplyHandler<AgentDailyPaymentHandler>("tgs.payment.background.agent", "tgs.payment.background.agent"))
 	.AddNatsGlobPatternExchange("*");
 
 builder.Services
