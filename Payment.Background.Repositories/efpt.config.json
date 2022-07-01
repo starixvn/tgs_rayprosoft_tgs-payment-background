@@ -1,0 +1,59 @@
+﻿{
+   "CodeGenerationMode": 2,
+   "ContextClassName": "TgsContext",
+   "ContextNamespace": "Entities",
+   "DefaultDacpacSchema": null,
+   "FilterSchemas": true,
+   "IncludeConnectionString": false,
+   "ModelNamespace": "Entities",
+   "OutputContextPath": "Entities",
+   "OutputPath": "Entities\/Models",
+   "ProjectRootNamespace": "Tgs.Payment.Background.Repositories",
+   "Schemas": [
+      {
+         "Name": "dbo"
+      }
+   ],
+   "SelectedHandlebarsLanguage": 0,
+   "SelectedToBeGenerated": 0,
+   "Tables": [
+      {
+         "Name": "dbo.player_daily_payment_statistics",
+         "ObjectType": 0
+      },
+      {
+         "Name": "dbo.background_payment_statistics_settings",
+         "ObjectType": 0
+      },
+      {
+         "Name": "dbo.players",
+         "ObjectType": 0
+      },
+      {
+         "Name": "dbo.withdraw_forms",
+         "ObjectType": 0
+      },
+      {
+         "Name": "dbo.deposit_forms",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": ".tgs",
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDbContextSplitting": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": true,
+   "UseNoConstructor": true,
+   "UseNoDefaultConstructor": true,
+   "UseNoNavigations": true,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": true,
+   "UseSchemaFolders": true,
+   "UseSpatial": false
+}

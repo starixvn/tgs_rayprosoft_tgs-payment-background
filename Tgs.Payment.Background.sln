@@ -1,0 +1,49 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32616.157
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Tgs.Payment.Background", "Tgs.Payment.Background\Tgs.Payment.Background.csproj", "{F51A415E-B68C-4A67-BA79-ABE75FF691B5}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Payment.Background.Core", "Payment.Background.Core\Payment.Background.Core.csproj", "{A80CC592-04A6-401A-AB1B-7C446F664FC1}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Payment.Background.Repositories", "Payment.Background.Repositories\Payment.Background.Repositories.csproj", "{7EC4B3F6-8DB1-45EB-97B6-070844630FA0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{E0959E5F-2DFF-4F79-9D92-BFB51B6C1B51}"
+	ProjectSection(SolutionItems) = preProject
+		.editorconfig = .editorconfig
+		nuget.config = nuget.config
+	EndProjectSection
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Tgs.Payment.Background.IntegrationTests", "Tgs.Payment.Background.IntegrationTests\Tgs.Payment.Background.IntegrationTests.csproj", "{02919FEA-70CC-4DE9-81E0-0EF54E074582}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F51A415E-B68C-4A67-BA79-ABE75FF691B5}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F51A415E-B68C-4A67-BA79-ABE75FF691B5}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F51A415E-B68C-4A67-BA79-ABE75FF691B5}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F51A415E-B68C-4A67-BA79-ABE75FF691B5}.Release|Any CPU.Build.0 = Release|Any CPU
+		{A80CC592-04A6-401A-AB1B-7C446F664FC1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{A80CC592-04A6-401A-AB1B-7C446F664FC1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{A80CC592-04A6-401A-AB1B-7C446F664FC1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{A80CC592-04A6-401A-AB1B-7C446F664FC1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7EC4B3F6-8DB1-45EB-97B6-070844630FA0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7EC4B3F6-8DB1-45EB-97B6-070844630FA0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7EC4B3F6-8DB1-45EB-97B6-070844630FA0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7EC4B3F6-8DB1-45EB-97B6-070844630FA0}.Release|Any CPU.Build.0 = Release|Any CPU
+		{02919FEA-70CC-4DE9-81E0-0EF54E074582}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{02919FEA-70CC-4DE9-81E0-0EF54E074582}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{02919FEA-70CC-4DE9-81E0-0EF54E074582}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{02919FEA-70CC-4DE9-81E0-0EF54E074582}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {6095FC75-0871-4E25-8F29-ED2073D8D618}
+	EndGlobalSection
+EndGlobal
