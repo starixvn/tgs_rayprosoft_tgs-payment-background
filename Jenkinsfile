@@ -60,17 +60,10 @@ pipeline {
 				sh 'dotnet test -c $BuildConfiguration --logger trx --no-build'
 			}
 		}
-		
-		stage('Push packages') {
-			steps {
-				sh 'dotnet pack -c $BuildConfiguration "TuPay.Client/MalakiPay.Client.csproj" --no-build'
-				sh 'dotnet nuget push "TuPay.Client/bin/$BuildConfiguration/*.nupkg" -s "raypro-baget" -k admin --skip-duplicate'
-			}
-		}
 
 		stage('Build Docker Image') {
 			steps {
-				sh 'dotnet build "Tgs.Payment.TuPay/Tgs.Payment.MalakiPay.csproj" -c $BuildConfiguration -t:ContainerBuild -p:DockerfileTag="$ImageName:${TAG}" --no-restore '
+				sh 'dotnet build "Tgs.Payment.Background/Tgs.Payment.Background.csproj" -c $BuildConfiguration -t:ContainerBuild -p:DockerfileTag="$ImageName:${TAG}" --no-restore '
 			}
 		}
 
