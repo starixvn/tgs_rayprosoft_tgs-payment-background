@@ -6,11 +6,16 @@ namespace Tgs.Payment.Background.MessageQueue;
 public class AgentDailyPaymentHandler : IMessageHandler
 {
 	private readonly ITgsRepository _tgsRepository;
+	private readonly IMessageSender _messageSender;
 
-	public AgentDailyPaymentHandler(ITgsRepository tgsRepository)
+	public AgentDailyPaymentHandler(
+		ITgsRepository tgsRepository,
+		IMessageSender messageSender)
 	{
 		_tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
+		_messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
 	}
+
 	public async ValueTask HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default)
 	{
 		var request = ProcessRequest.Parser.ParseFrom(data.Span);
@@ -22,6 +27,10 @@ public class AgentDailyPaymentHandler : IMessageHandler
 
 		var lastProcessDate = await _tgsRepository
 			.GetAgentDailyPaymentStatisticsLastProcessDateAsync(cancellationToken)
+			.ConfigureAwait(false);
+
+		await _messageSender
+			.SendAsync("tgs.payment.background.player", data, cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
 		if (lastProcessDate is null || requestDate > lastProcessDate)
