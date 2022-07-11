@@ -25,6 +25,8 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
 
             entity.Property(e => e.AgentId).HasColumnName("agent_id");
 
+            entity.Property(e => e.DepositPlayers).HasColumnName("deposit_players");
+
             entity.Property(e => e.FirstDepositPlayers).HasColumnName("first_deposit_players");
 
             entity.Property(e => e.UndepositAgainPlayers).HasColumnName("undeposit_again_players");

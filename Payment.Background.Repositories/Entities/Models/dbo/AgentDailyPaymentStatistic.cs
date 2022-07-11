@@ -12,5 +12,6 @@ namespace Tgs.Payment.Background.Repositories.Entities
         public DateOnly ReportDate { get; set; }
         public int FirstDepositPlayers { get; set; }
         public int UndepositAgainPlayers { get; set; }
+        public int DepositPlayers { get; set; }
     }
 }

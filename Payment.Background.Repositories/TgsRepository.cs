@@ -162,7 +162,7 @@ internal class TgsRepository : ITgsRepository
 			.ConfigureAwait(false);
 
 		var existsData = await _tgsContext.PlayerDailyPaymentStatistics
-			.Where(row => row.ReportDate == To)
+			.Where(row => row.ReportDate == From)
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
@@ -249,7 +249,8 @@ internal class TgsRepository : ITgsRepository
 
 	public async ValueTask ProcessAgentDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
 	{
-		var undepositAgainCheckDate = processDate.AddDays(-2);
+		var queryDate = processDate.AddDays(-1);
+		var undepositAgainCheckDate = processDate.AddDays(-3);
 
 		var processData = await _tgsContext.AgentDailyPaymentStatistics
 			.FromSqlInterpolated($@"
@@ -278,7 +279,7 @@ internal class TgsRepository : ITgsRepository
 							FROM
 								dbo.player_daily_payment_statistics AS PS
 							WHERE
-								PS.report_date = {processDate}
+								PS.report_date = {queryDate}
 						) AS FD
 						FULL OUTER JOIN
 						(
@@ -297,9 +298,10 @@ internal class TgsRepository : ITgsRepository
 				SELECT
 					P.agent_id,
 					P.brand_id,
-					{processDate} AS report_date,
+					{queryDate} AS report_date,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
-					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players
+					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
+					Count(CTE.player_code) AS deposit_players
 				FROM
 					CTE
 					JOIN
@@ -310,11 +312,10 @@ internal class TgsRepository : ITgsRepository
 					P.brand_id,
 					P.agent_id")
 			.AsNoTracking()
-			.Where(row => row.FirstDepositPlayers > 0 || row.UndepositAgainPlayers > 0)
 			.ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
 
 		var existsData = await _tgsContext.AgentDailyPaymentStatistics
-			.Where(row => row.ReportDate == processDate)
+			.Where(row => row.ReportDate == queryDate)
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
@@ -343,6 +344,7 @@ internal class TgsRepository : ITgsRepository
 				var modifyRow = p.Db;
 				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
 				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
+				modifyRow.DepositPlayers = p.Input.DepositPlayers;
 			}
 			else
 				_ = await _tgsContext.AgentDailyPaymentStatistics
