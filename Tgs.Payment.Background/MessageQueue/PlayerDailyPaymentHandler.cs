@@ -25,11 +25,27 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 			.GetPlayerDailyPaymentStatisticsLastProcessDateAsync(cancellationToken)
 			.ConfigureAwait(false);
 
-		if (lastProcessDate is null || requestDate > lastProcessDate)
+		if (lastProcessDate is null)
 		{
 			await _tgsRepository
 				.ProcessPlayerDailyPaymentStatisticsAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
+			await _tgsRepository
+				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
+				.ConfigureAwait(false);
+		}
+		else if (requestDate > lastProcessDate)
+		{
+			var diffDays = (requestDate.Value.ToDateTime(TimeOnly.MinValue)
+				- lastProcessDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
+
+			for (int i = 1; i < diffDays; i++)
+				await _tgsRepository
+					.ProcessPlayerDailyPaymentStatisticsAsync(
+						lastProcessDate.Value.AddDays(i),
+						cancellationToken)
+					.ConfigureAwait(false);
+
 			await _tgsRepository
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
