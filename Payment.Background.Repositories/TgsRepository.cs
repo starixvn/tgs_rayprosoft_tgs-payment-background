@@ -37,6 +37,7 @@ internal class TgsRepository : ITgsRepository
 					D.deposit_amount AS daily_deposit_amount,
 					D.deposit_count AS daily_deposit_count,
 					D.daily_first_deposit_on AS first_deposit_on,
+					D.daily_first_deposit_amount AS first_deposit_amount,
 					D.total_deposit_count,
 					D.total_deposit_amount,
 					W.withdraw_amount AS daily_withdraw_amount,
@@ -51,24 +52,36 @@ internal class TgsRepository : ITgsRepository
 							""date"",
 							deposit_amount,
 							daily_first_deposit_on,
+							daily_first_deposit_amount,
 							deposit_count
 						)
 						AS
 						(
 							SELECT
 								player_code,
-								(reviewed_on at time zone 'Asia/Shanghai')::date AS date,
-								Sum(COALESCE(actual_amount, amount)) AS deposit_amount,
-								Min(reviewed_on) AS daily_first_deposit_on,
+								date,
+								Sum(deposit_amount) AS deposit_amount,
+								Min(daily_first_deposit_on) AS daily_first_deposit_on,
+								Min(daily_first_deposit_amount) AS daily_first_deposit_amount,
 								Count(1) as deposit_count
 							FROM
-								dbo.deposit_forms
-							WHERE
-								status = 8000
-								AND
-								reviewed_on >= {queryTimeRange.From}
-								AND
-								reviewed_on < {queryTimeRange.To}
+								(
+									SELECT
+										player_code,
+										(reviewed_on at time zone 'Asia/Shanghai')::date AS date,
+										COALESCE(actual_amount, amount) AS deposit_amount,
+										First_Value(reviewed_on) OVER w AS daily_first_deposit_on,
+										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount
+									FROM
+										dbo.deposit_forms
+									WHERE
+										status = 8000
+										AND
+										reviewed_on >= {queryTimeRange.From}
+										AND
+										reviewed_on < {queryTimeRange.To}
+									WINDOW w AS (PARTITION BY player_code ORDER BY reviewed_on ASC)
+								) AS T
 							GROUP BY
 								player_code,
 								""date""
@@ -79,6 +92,7 @@ internal class TgsRepository : ITgsRepository
 							DS.deposit_amount,
 							DS.deposit_count,
 							COALESCE(TFD.first_deposit_on, DS.daily_first_deposit_on) AS daily_first_deposit_on,
+							COALESCE(TFD.first_deposit_amount, DS.daily_first_deposit_amount) AS daily_first_deposit_amount,
 							DS.deposit_count + COALESCE(TFD.total_deposit_count, 0) AS total_deposit_count,
 							DS.deposit_amount + COALESCE(TFD.total_deposit_amount, 0) AS total_deposit_amount
 						FROM
@@ -90,7 +104,8 @@ internal class TgsRepository : ITgsRepository
 									Max(PS.report_date) AS report_date,
 									Max(PS.total_deposit_count) AS total_deposit_count,
 									Max(PS.total_deposit_amount) AS total_deposit_amount,
-									Min(PS.first_deposit_on) AS first_deposit_on
+									Min(PS.first_deposit_on) AS first_deposit_on,
+									Min(PS.first_deposit_amount) As first_deposit_amount
 								FROM
 									dbo.player_daily_payment_statistics AS PS
 									JOIN
@@ -192,6 +207,7 @@ internal class TgsRepository : ITgsRepository
 				modifyRow.TotalDepositAmount = p.Input.TotalDepositAmount;
 				modifyRow.TotalDepositCount = p.Input.TotalDepositCount;
 				modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
+				modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
 				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
 				modifyRow.DailyWithdrawCount = p.Input.DailyWithdrawCount;
 				modifyRow.TotalWithdrawAmount = p.Input.TotalWithdrawAmount;
@@ -301,7 +317,7 @@ internal class TgsRepository : ITgsRepository
 					{queryDate} AS report_date,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
 					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
-					Count(CTE.player_code) AS deposit_players
+					Count(CTE.is_first_deposit) AS deposit_players
 				FROM
 					CTE
 					JOIN

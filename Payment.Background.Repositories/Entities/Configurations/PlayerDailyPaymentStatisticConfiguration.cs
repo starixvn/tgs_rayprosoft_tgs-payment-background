@@ -31,6 +31,8 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
 
             entity.Property(e => e.DailyWithdrawCount).HasColumnName("daily_withdraw_count");
 
+            entity.Property(e => e.FirstDepositAmount).HasColumnName("first_deposit_amount");
+
             entity.Property(e => e.FirstDepositOn).HasColumnName("first_deposit_on");
 
             entity.Property(e => e.TotalDepositAmount).HasColumnName("total_deposit_amount");

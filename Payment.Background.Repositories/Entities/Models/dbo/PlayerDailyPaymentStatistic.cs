@@ -18,5 +18,6 @@ namespace Tgs.Payment.Background.Repositories.Entities
         public decimal? TotalWithdrawAmount { get; set; }
         public int? TotalWithdrawCount { get; set; }
         public DateTime? FirstDepositOn { get; set; }
+        public decimal? FirstDepositAmount { get; set; }
     }
 }
