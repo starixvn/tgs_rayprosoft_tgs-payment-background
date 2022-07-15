@@ -10,10 +10,11 @@ spec:
         spec:
           containers:
           - name: payment-background-job
-            image: busybox:1.35
+            image: alpine/curl:3.14
             imagePullPolicy: IfNotPresent
             command:
-            - /bin/sh
-            - -c
-            - curl -X POST http://tgs-payment-background/schedule/agent
+            - curl
+            - -X
+            - POST
+            - http://tgs-payment-background/schedule/agent
           restartPolicy: OnFailure
