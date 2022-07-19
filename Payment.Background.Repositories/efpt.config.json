@@ -22,11 +22,15 @@
          "ObjectType": 0
       },
       {
-         "Name": "dbo.agent_daily_payment_statistics",
+         "Name": "dbo.brand_daily_payment_statistics",
          "ObjectType": 0
       },
       {
          "Name": "dbo.background_payment_statistics_settings",
+         "ObjectType": 0
+      },
+      {
+         "Name": "dbo.agent_daily_payment_statistics",
          "ObjectType": 0
       },
       {
