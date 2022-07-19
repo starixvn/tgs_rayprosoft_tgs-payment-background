@@ -16,5 +16,5 @@ spec:
             - curl
             - -X
             - POST
-            - http://tgs-payment-background/schedule/agent
+            - http://tgs-payment-background/schedule
           restartPolicy: OnFailure

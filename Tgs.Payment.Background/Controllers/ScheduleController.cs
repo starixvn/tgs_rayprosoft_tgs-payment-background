@@ -10,9 +10,9 @@ namespace Tgs.Payment.Background.Controllers;
 [ApiController]
 public class ScheduleController : ControllerBase
 {
-	[HttpPost("player", Name = "QueueProcessPlayerPaymentStatisticsJob")]
+	[HttpPost(Name = "QueueProcessAllPaymentStatisticsJobs")]
 	[SuccessStatusCode(202)]
-	public void QueueProcessPlayerPaymentStatisticsJob(
+	public void QueueProcessAllPaymentStatisticsJobs(
 		[FromServices] IMessageSender messageSender)
 	{
 		var currentDate = DateOnly.FromDateTime(DateTimeOffset.Now
@@ -24,53 +24,20 @@ public class ScheduleController : ControllerBase
 			ProcessDate = currentDate
 		};
 
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.player",
-				request.ToByteArray())
-			.AsTask();
-	}
-
-	[HttpPost("agent", Name = "QueueProcessAgentPaymentStatisticsJob")]
-	[SuccessStatusCode(202)]
-	public void QueueProcessAgentPaymentStatisticsJob(
-		[FromServices] IMessageSender messageSender)
-	{
-		var currentDate = DateOnly.FromDateTime(DateTimeOffset.Now
-			.ToOffset(TimeSpan.FromHours(8D))
-			.DateTime);
-
-		var request = new ProcessRequest
+		_ = Task.Run(async () =>
 		{
-			ProcessDate = currentDate
-		};
+			await messageSender
+				.SendAsync(
+					"tgs.payment.background.agent",
+					request.ToByteArray())
+				.ConfigureAwait(false);
 
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.agent",
-				request.ToByteArray())
-			.AsTask();
-	}
-
-	[HttpPost("brand", Name = "QueueProcessAgentPaymentStatisticsJob")]
-	[SuccessStatusCode(202)]
-	public void QueueProcessBrandPaymentStatisticsJob(
-		[FromServices] IMessageSender messageSender)
-	{
-		var currentDate = DateOnly.FromDateTime(DateTimeOffset.Now
-			.ToOffset(TimeSpan.FromHours(8D))
-			.DateTime);
-
-		var request = new ProcessRequest
-		{
-			ProcessDate = currentDate
-		};
-
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.brand",
-				request.ToByteArray())
-			.AsTask();
+			await messageSender
+				.SendAsync(
+					"tgs.payment.background.brand",
+					request.ToByteArray())
+				.ConfigureAwait(false);
+		});
 	}
 
 	[HttpPost("player/{processDate}", Name = "QueueProcessPlayerPaymentStatisticsJobWithProcessDate")]
