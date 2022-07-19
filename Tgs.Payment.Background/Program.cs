@@ -1,3 +1,5 @@
+using Hangfire;
+using Hangfire.MemoryStorage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
@@ -7,6 +9,7 @@ using OpenTelemetry.Exporter;
 using OpenTelemetry.Instrumentation.AspNetCore;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
+using Tgs.Payment.Background;
 using Tgs.Payment.Background.MessageQueue;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -53,6 +56,12 @@ builder.Services
 		.AddReplyHandler<AgentDailyPaymentHandler>("tgs.payment.background.agent", "tgs.payment.background.agent")
 		.AddReplyHandler<BrandDailyPaymentHandler>("tgs.payment.background.brand", "tgs.payment.background.brand"))
 	.AddNatsGlobPatternExchange("*");
+
+builder.Services
+	.AddTransient<PaymentBackgroundJob>()
+	.AddHangfire((_, configuration) => configuration
+		.UseMemoryStorage())
+	.AddHangfireServer();
 
 builder.Services
 	.AddSwaggerGen(c =>
