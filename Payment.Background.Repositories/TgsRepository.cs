@@ -441,7 +441,7 @@ internal class TgsRepository : ITgsRepository
 			.ConfigureAwait(false)
 			?? _tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
 			{
-				RecordKey = AgentDailyPaymentKey
+				RecordKey = BrandDailyPaymentKey
 			}).Entity;
 
 		setting.ProcessedTime = date
