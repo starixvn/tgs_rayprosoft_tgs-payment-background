@@ -70,7 +70,7 @@ internal class TgsRepository : ITgsRepository
 								(
 									SELECT
 										player_code,
-										(reviewed_on at time zone 'Asia/Shanghai')::date AS date,
+										(updated_on at time zone 'Asia/Shanghai')::date AS date,
 										COALESCE(actual_amount, amount) AS deposit_amount,
 										First_Value(reviewed_on) OVER w AS daily_first_deposit_on,
 										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount
@@ -79,9 +79,9 @@ internal class TgsRepository : ITgsRepository
 									WHERE
 										status = 8000
 										AND
-										reviewed_on >= {queryTimeRange.From}
+										updated_on >= {queryTimeRange.From}
 										AND
-										reviewed_on < {queryTimeRange.To}
+										updated_on < {queryTimeRange.To}
 									WINDOW w AS (PARTITION BY player_code ORDER BY reviewed_on ASC)
 								) AS T
 							GROUP BY
@@ -113,7 +113,7 @@ internal class TgsRepository : ITgsRepository
 									JOIN
 									depositStatistics AS DS1 ON PS.player_code = DS1.player_code
 								WHERE
-									PS.report_date < {To}
+									PS.report_date < {From}
 								GROUP BY
 									PS.player_code
 							) AS TFD ON DS.player_code = TFD.player_code
@@ -168,7 +168,7 @@ internal class TgsRepository : ITgsRepository
 									JOIN
 									withdrawStatistics AS WS1 ON PS.player_code = WS1.player_code
 								WHERE
-									PS.report_date < {To}
+									PS.report_date < {From}
 								GROUP BY
 									PS.player_code
 							) AS TFW ON WS.player_code = TFW.player_code
