@@ -1,0 +1,23 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: configmap-{{ include "payment-background.fullname" . }}
+  namespace: {{ .Release.Namespace }}
+  labels:
+    {{- include "payment-background.labels" . | nindent 4 }}
+data:
+  appsettings.json: ""
+  monitor.settings.json: |
+    {
+      "Logging":{
+        "Console": {
+          "FormatterName": "json"
+        },
+        "LogLevel": {
+          "Default": "Warning",
+          "Microsoft": "Warning",
+          "Microsoft.Diagnostics": "Warning",
+          "Microsoft.Hosting.Lifetime": "Information"
+        }
+      }
+    }

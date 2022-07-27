@@ -1,7 +1,6 @@
-﻿using Google.Protobuf;
+﻿using Hangfire;
 using Microsoft.AspNetCore.Mvc;
 using Tgs.MessageQueue;
-using Tgs.Payment.Background.Protos;
 using Tgs.WebApi.Toolkits;
 
 namespace Tgs.Payment.Background.Controllers;
@@ -10,46 +9,18 @@ namespace Tgs.Payment.Background.Controllers;
 [ApiController]
 public class ScheduleController : ControllerBase
 {
-	[HttpPost("player", Name = "QueueProcessPlayerPaymentStatisticsJob")]
+	[HttpPost(Name = "QueueProcessAllPaymentStatisticsJobs")]
 	[SuccessStatusCode(202)]
-	public void QueueProcessPlayerPaymentStatisticsJob(
-		[FromServices] IMessageSender messageSender)
+	public void QueueProcessAllPaymentStatisticsJobs()
 	{
 		var currentDate = DateOnly.FromDateTime(DateTimeOffset.Now
 			.ToOffset(TimeSpan.FromHours(8D))
 			.DateTime);
 
-		var request = new ProcessRequest
-		{
-			ProcessDate = currentDate
-		};
-
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.player",
-				request.ToByteArray())
-			.AsTask();
-	}
-
-	[HttpPost("agent", Name = "QueueProcessAgentPaymentStatisticsJob")]
-	[SuccessStatusCode(202)]
-	public void QueueProcessAgentPaymentStatisticsJob(
-		[FromServices] IMessageSender messageSender)
-	{
-		var currentDate = DateOnly.FromDateTime(DateTimeOffset.Now
-			.ToOffset(TimeSpan.FromHours(8D))
-			.DateTime);
-
-		var request = new ProcessRequest
-		{
-			ProcessDate = currentDate
-		};
-
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.agent",
-				request.ToByteArray())
-			.AsTask();
+		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
+			currentDate,
+			"tgs.payment.background.agent",
+			"tgs.payment.background.brand"));
 	}
 
 	[HttpPost("player/{processDate}", Name = "QueueProcessPlayerPaymentStatisticsJobWithProcessDate")]
@@ -58,33 +29,30 @@ public class ScheduleController : ControllerBase
 		[FromServices] IMessageSender messageSender,
 		DateOnly processDate)
 	{
-		var request = new ProcessRequest
-		{
-			ProcessDate = processDate
-		};
-
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.player",
-				request.ToByteArray())
-			.AsTask();
+		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
+			processDate,
+			"tgs.payment.background.player"));
 	}
 
-	[HttpPost(template: "agent/{processDate}", Name = "QueueProcessAgentPaymentStatisticsJobWithProcessDate")]
+	[HttpPost("agent/{processDate}", Name = "QueueProcessAgentPaymentStatisticsJobWithProcessDate")]
 	[SuccessStatusCode(202)]
 	public void QueueProcessAgentPaymentStatisticsJobWithProcessDate(
 		[FromServices] IMessageSender messageSender,
 		DateOnly processDate)
 	{
-		var request = new ProcessRequest
-		{
-			ProcessDate = processDate
-		};
+		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
+			processDate,
+			"tgs.payment.background.agent"));
+	}
 
-		_ = messageSender
-			.SendAsync(
-				"tgs.payment.background.agent",
-				request.ToByteArray())
-			.AsTask();
+	[HttpPost("brand/{processDate}", Name = "QueueProcessBrandPaymentStatisticsJobWithProcessDate")]
+	[SuccessStatusCode(202)]
+	public void QueueProcessBrandPaymentStatisticsJobWithProcessDate(
+		[FromServices] IMessageSender messageSender,
+		DateOnly processDate)
+	{
+		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
+			processDate,
+			"tgs.payment.background.brand"));
 	}
 }

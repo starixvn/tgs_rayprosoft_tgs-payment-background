@@ -7,6 +7,8 @@ internal class TgsRepository : ITgsRepository
 {
 	private const string PlayerDailyPaymentKey = "PlayerDailyPayment";
 	private const string AgentDailyPaymentKey = "AgentDailyPayment";
+	private const string BrandDailyPaymentKey = "BrandDailyPayment";
+
 	private readonly TgsContext _tgsContext;
 
 	public TgsRepository(TgsContext tgsContext)
@@ -37,6 +39,7 @@ internal class TgsRepository : ITgsRepository
 					D.deposit_amount AS daily_deposit_amount,
 					D.deposit_count AS daily_deposit_count,
 					D.daily_first_deposit_on AS first_deposit_on,
+					D.daily_first_deposit_amount AS first_deposit_amount,
 					D.total_deposit_count,
 					D.total_deposit_amount,
 					W.withdraw_amount AS daily_withdraw_amount,
@@ -51,24 +54,36 @@ internal class TgsRepository : ITgsRepository
 							""date"",
 							deposit_amount,
 							daily_first_deposit_on,
+							daily_first_deposit_amount,
 							deposit_count
 						)
 						AS
 						(
 							SELECT
 								player_code,
-								(reviewed_on at time zone 'Asia/Shanghai')::date AS date,
-								Sum(COALESCE(actual_amount, amount)) AS deposit_amount,
-								Min(reviewed_on) AS daily_first_deposit_on,
+								date,
+								Sum(deposit_amount) AS deposit_amount,
+								Min(daily_first_deposit_on) AS daily_first_deposit_on,
+								Min(daily_first_deposit_amount) AS daily_first_deposit_amount,
 								Count(1) as deposit_count
 							FROM
-								dbo.deposit_forms
-							WHERE
-								status = 8000
-								AND
-								reviewed_on >= {queryTimeRange.From}
-								AND
-								reviewed_on < {queryTimeRange.To}
+								(
+									SELECT
+										player_code,
+										(reviewed_on at time zone 'Asia/Shanghai')::date AS date,
+										COALESCE(actual_amount, amount) AS deposit_amount,
+										First_Value(reviewed_on) OVER w AS daily_first_deposit_on,
+										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount
+									FROM
+										dbo.deposit_forms
+									WHERE
+										status = 8000
+										AND
+										reviewed_on >= {queryTimeRange.From}
+										AND
+										reviewed_on < {queryTimeRange.To}
+									WINDOW w AS (PARTITION BY player_code ORDER BY reviewed_on ASC)
+								) AS T
 							GROUP BY
 								player_code,
 								""date""
@@ -79,6 +94,7 @@ internal class TgsRepository : ITgsRepository
 							DS.deposit_amount,
 							DS.deposit_count,
 							COALESCE(TFD.first_deposit_on, DS.daily_first_deposit_on) AS daily_first_deposit_on,
+							COALESCE(TFD.first_deposit_amount, DS.daily_first_deposit_amount) AS daily_first_deposit_amount,
 							DS.deposit_count + COALESCE(TFD.total_deposit_count, 0) AS total_deposit_count,
 							DS.deposit_amount + COALESCE(TFD.total_deposit_amount, 0) AS total_deposit_amount
 						FROM
@@ -90,7 +106,8 @@ internal class TgsRepository : ITgsRepository
 									Max(PS.report_date) AS report_date,
 									Max(PS.total_deposit_count) AS total_deposit_count,
 									Max(PS.total_deposit_amount) AS total_deposit_amount,
-									Min(PS.first_deposit_on) AS first_deposit_on
+									Min(PS.first_deposit_on) AS first_deposit_on,
+									Min(PS.first_deposit_amount) As first_deposit_amount
 								FROM
 									dbo.player_daily_payment_statistics AS PS
 									JOIN
@@ -162,7 +179,7 @@ internal class TgsRepository : ITgsRepository
 			.ConfigureAwait(false);
 
 		var existsData = await _tgsContext.PlayerDailyPaymentStatistics
-			.Where(row => row.ReportDate == To)
+			.Where(row => row.ReportDate == From)
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
@@ -192,6 +209,7 @@ internal class TgsRepository : ITgsRepository
 				modifyRow.TotalDepositAmount = p.Input.TotalDepositAmount;
 				modifyRow.TotalDepositCount = p.Input.TotalDepositCount;
 				modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
+				modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
 				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
 				modifyRow.DailyWithdrawCount = p.Input.DailyWithdrawCount;
 				modifyRow.TotalWithdrawAmount = p.Input.TotalWithdrawAmount;
@@ -249,7 +267,8 @@ internal class TgsRepository : ITgsRepository
 
 	public async ValueTask ProcessAgentDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
 	{
-		var undepositAgainCheckDate = processDate.AddDays(-2);
+		var queryDate = processDate.AddDays(-1);
+		var undepositAgainCheckDate = processDate.AddDays(-3);
 
 		var processData = await _tgsContext.AgentDailyPaymentStatistics
 			.FromSqlInterpolated($@"
@@ -278,7 +297,7 @@ internal class TgsRepository : ITgsRepository
 							FROM
 								dbo.player_daily_payment_statistics AS PS
 							WHERE
-								PS.report_date = {processDate}
+								PS.report_date = {queryDate}
 						) AS FD
 						FULL OUTER JOIN
 						(
@@ -297,9 +316,10 @@ internal class TgsRepository : ITgsRepository
 				SELECT
 					P.agent_id,
 					P.brand_id,
-					{processDate} AS report_date,
+					{queryDate} AS report_date,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
-					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players
+					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
+					Count(CTE.is_first_deposit) AS deposit_players
 				FROM
 					CTE
 					JOIN
@@ -310,11 +330,11 @@ internal class TgsRepository : ITgsRepository
 					P.brand_id,
 					P.agent_id")
 			.AsNoTracking()
-			.Where(row => row.FirstDepositPlayers > 0 || row.UndepositAgainPlayers > 0)
-			.ToArrayAsync(cancellationToken: cancellationToken).ConfigureAwait(false);
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
 
 		var existsData = await _tgsContext.AgentDailyPaymentStatistics
-			.Where(row => row.ReportDate == processDate)
+			.Where(row => row.ReportDate == queryDate)
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
@@ -343,6 +363,7 @@ internal class TgsRepository : ITgsRepository
 				var modifyRow = p.Db;
 				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
 				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
+				modifyRow.DepositPlayers = p.Input.DepositPlayers;
 			}
 			else
 				_ = await _tgsContext.AgentDailyPaymentStatistics
@@ -388,6 +409,152 @@ internal class TgsRepository : ITgsRepository
 		setting.ProcessedTime = date
 			.AddDays(-1)
 			.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc);
+
+		_ = await _tgsContext
+			.SaveChangesAsync(cancellationToken)
+			.ConfigureAwait(false);
+	}
+
+	public async ValueTask<DateOnly?> GetBrandDailyPaymentStatisticsLastProcessDateAsync(CancellationToken cancellationToken = default)
+	{
+		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+			.FirstOrDefaultAsync(
+				setting => setting.RecordKey == BrandDailyPaymentKey,
+				cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		var value = setting is null
+			? (DateTimeOffset?)null
+			: new DateTimeOffset(setting.ProcessedTime).ToOffset(TimeSpan.FromHours(8D));
+
+		return value is null
+			? null
+			: DateOnly.FromDateTime(value.Value.DateTime);
+	}
+
+	public async ValueTask SetBrandDailyPaymentStatisticsLastProcessDateAsync(DateOnly date, CancellationToken cancellationToken = default)
+	{
+		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+			.FirstOrDefaultAsync(
+				setting => setting.RecordKey == BrandDailyPaymentKey,
+				cancellationToken: cancellationToken)
+			.ConfigureAwait(false)
+			?? _tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
+			{
+				RecordKey = BrandDailyPaymentKey
+			}).Entity;
+
+		setting.ProcessedTime = date
+			.AddDays(-1)
+			.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc);
+
+		_ = await _tgsContext
+			.SaveChangesAsync(cancellationToken)
+			.ConfigureAwait(false);
+	}
+
+	public async ValueTask ProcessBrandDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
+	{
+		var queryDate = processDate.AddDays(-1);
+		var undepositAgainCheckDate = processDate.AddDays(-3);
+
+		var processData = await _tgsContext.BrandDailyPaymentStatistics
+			.FromSqlInterpolated($@"
+				WITH CTE(
+					player_code,
+					is_first_deposit,
+					un_second_deposit
+				)
+				AS
+				(
+					SELECT
+						COALESCE(FD.player_code, SD.player_code) AS player_code,
+						FD.is_first_deposit,
+						CASE
+							WHEN SD.player_code IS NULL THEN 0
+							ELSE 1
+						END AS un_second_deposit
+					FROM
+						(
+							SELECT
+								PS.player_code,
+								CASE
+									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
+									ELSE 0
+								END AS is_first_deposit
+							FROM
+								dbo.player_daily_payment_statistics AS PS
+							WHERE
+								PS.report_date = {queryDate}
+						) AS FD
+						FULL OUTER JOIN
+						(
+							SELECT
+								player_code
+							FROM
+								dbo.player_daily_payment_statistics AS PS
+							WHERE
+								report_date <= {undepositAgainCheckDate}
+							GROUP BY
+								player_code
+							HAVING
+								Max(total_deposit_count) = 1
+						) AS SD ON FD.player_code = SD.player_code
+				)
+				SELECT
+					P.brand_id,
+					{queryDate} AS report_date,
+					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
+					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
+					Count(CTE.is_first_deposit) AS deposit_players
+				FROM
+					CTE
+					JOIN
+					dbo.players AS P ON CTE.player_code = P.player_code
+				GROUP BY
+					P.brand_id")
+			.AsNoTracking()
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		var existsData = await _tgsContext.BrandDailyPaymentStatistics
+			.Where(row => row.ReportDate == queryDate)
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		var leftJoin = from input in processData
+					   join db in existsData
+						on new { input.BrandId, input.ReportDate }
+							equals new { db.BrandId, db.ReportDate } into g
+					   from db in g.DefaultIfEmpty()
+					   select new
+					   {
+						   Input = input,
+						   Db = db
+					   };
+
+		var rightJoin = from db in existsData
+						join input in processData
+							on new { db.BrandId, db.ReportDate }
+								equals new { input.BrandId, input.ReportDate } into g
+						from input in g.DefaultIfEmpty()
+						where input is null
+						select db;
+
+		foreach (var p in leftJoin)
+			if (p.Db is not null)
+			{
+				var modifyRow = p.Db;
+				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
+				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
+				modifyRow.DepositPlayers = p.Input.DepositPlayers;
+			}
+			else
+				_ = await _tgsContext.BrandDailyPaymentStatistics
+					.AddAsync(p.Input, cancellationToken)
+					.ConfigureAwait(false);
+
+		_tgsContext.RemoveRange(rightJoin);
 
 		_ = await _tgsContext
 			.SaveChangesAsync(cancellationToken)

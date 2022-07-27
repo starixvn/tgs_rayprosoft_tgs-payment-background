@@ -25,19 +25,40 @@ public class AgentDailyPaymentHandler : IMessageHandler
 		if (requestDate is null)
 			return;
 
+		var playerStatisticsLastProcessDate = await _tgsRepository
+			.GetPlayerDailyPaymentStatisticsLastProcessDateAsync(cancellationToken)
+			.ConfigureAwait(false);
+
+		if (playerStatisticsLastProcessDate is null || requestDate > playerStatisticsLastProcessDate)
+			await _messageSender
+				.SendAsync("tgs.payment.background.player", data, cancellationToken: cancellationToken)
+				.ConfigureAwait(false);
+
 		var lastProcessDate = await _tgsRepository
 			.GetAgentDailyPaymentStatisticsLastProcessDateAsync(cancellationToken)
 			.ConfigureAwait(false);
 
-		await _messageSender
-			.SendAsync("tgs.payment.background.player", data, cancellationToken: cancellationToken)
-			.ConfigureAwait(false);
-
-		if (lastProcessDate is null || requestDate > lastProcessDate)
+		if (lastProcessDate is null)
 		{
 			await _tgsRepository
 				.ProcessAgentDailyPaymentStatisticsAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
+			await _tgsRepository
+				.SetAgentDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
+				.ConfigureAwait(false);
+		}
+		else if (requestDate > lastProcessDate)
+		{
+			var diffDays = (requestDate.Value.ToDateTime(TimeOnly.MinValue)
+				- lastProcessDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
+
+			for (int i = 1; i < diffDays; i++)
+				await _tgsRepository
+					.ProcessAgentDailyPaymentStatisticsAsync(
+						lastProcessDate.Value.AddDays(i),
+						cancellationToken)
+					.ConfigureAwait(false);
+
 			await _tgsRepository
 				.SetAgentDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
