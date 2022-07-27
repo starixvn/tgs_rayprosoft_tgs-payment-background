@@ -72,7 +72,7 @@ internal class TgsRepository : ITgsRepository
 										player_code,
 										(updated_on at time zone 'Asia/Shanghai')::date AS date,
 										COALESCE(actual_amount, amount) AS deposit_amount,
-										First_Value(reviewed_on) OVER w AS daily_first_deposit_on,
+										First_Value(updated_on) OVER w AS daily_first_deposit_on,
 										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount
 									FROM
 										dbo.deposit_forms
@@ -82,7 +82,7 @@ internal class TgsRepository : ITgsRepository
 										updated_on >= {queryTimeRange.From}
 										AND
 										updated_on < {queryTimeRange.To}
-									WINDOW w AS (PARTITION BY player_code ORDER BY reviewed_on ASC)
+									WINDOW w AS (PARTITION BY player_code ORDER BY updated_on ASC)
 								) AS T
 							GROUP BY
 								player_code,
