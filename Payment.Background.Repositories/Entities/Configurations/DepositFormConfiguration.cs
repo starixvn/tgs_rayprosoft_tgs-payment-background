@@ -46,6 +46,10 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
                 .HasColumnName("created_on")
                 .HasDefaultValueSql("now()");
 
+            entity.Property(e => e.HandlingFee)
+                .HasPrecision(18, 6)
+                .HasColumnName("handling_fee");
+
             entity.Property(e => e.OrderNo)
                 .HasMaxLength(50)
                 .HasColumnName("order_no");

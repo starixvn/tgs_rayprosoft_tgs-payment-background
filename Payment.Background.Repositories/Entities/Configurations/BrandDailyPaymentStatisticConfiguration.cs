@@ -23,6 +23,14 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
 
             entity.Property(e => e.BrandId).HasColumnName("brand_id");
 
+            entity.Property(e => e.DailyDepositAmount).HasColumnName("daily_deposit_amount");
+
+            entity.Property(e => e.DailyDepositHandlingFee).HasColumnName("daily_deposit_handling_fee");
+
+            entity.Property(e => e.DailyWithdrawAmount).HasColumnName("daily_withdraw_amount");
+
+            entity.Property(e => e.DailyWithdrawHandlingFee).HasColumnName("daily_withdraw_handling_fee");
+
             entity.Property(e => e.DepositPlayers).HasColumnName("deposit_players");
 
             entity.Property(e => e.FirstDepositPlayers).HasColumnName("first_deposit_players");
