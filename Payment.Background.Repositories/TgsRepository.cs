@@ -299,6 +299,10 @@ internal class TgsRepository : ITgsRepository
 			.FromSqlInterpolated($@"
 				WITH CTE(
 					player_code,
+					daily_deposit_amount,
+					daily_deposit_handling_fee,
+					daily_withdraw_amount,
+					daily_withdraw_handling_fee,
 					is_first_deposit,
 					un_second_deposit
 				)
@@ -306,6 +310,10 @@ internal class TgsRepository : ITgsRepository
 				(
 					SELECT
 						COALESCE(FD.player_code, SD.player_code) AS player_code,
+						FD.daily_deposit_amount,
+						FD.daily_deposit_handling_fee,
+						FD.daily_withdraw_amount,
+						FD.daily_withdraw_handling_fee,
 						FD.is_first_deposit,
 						CASE
 							WHEN SD.player_code IS NULL THEN 0
@@ -315,6 +323,10 @@ internal class TgsRepository : ITgsRepository
 						(
 							SELECT
 								PS.player_code,
+								PS.daily_deposit_amount,
+								PS.daily_deposit_handling_fee,
+								PS.daily_withdraw_amount,
+								PS.daily_withdraw_handling_fee,
 								CASE
 									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
 									ELSE 0
@@ -342,6 +354,10 @@ internal class TgsRepository : ITgsRepository
 					P.agent_id,
 					P.brand_id,
 					{queryDate} AS report_date,
+					Sum(CTE.daily_deposit_amount) AS daily_deposit_amount,
+					Sum(CTE.daily_deposit_handling_fee) AS daily_deposit_handling_fee,
+					Sum(CTE.daily_withdraw_amount) AS daily_withdraw_amount,
+					Sum(CTE.daily_withdraw_handling_fee) AS daily_withdraw_handling_fee,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
 					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
 					Count(CTE.is_first_deposit) AS deposit_players
@@ -386,6 +402,10 @@ internal class TgsRepository : ITgsRepository
 			if (p.Db is not null)
 			{
 				var modifyRow = p.Db;
+				modifyRow.DailyDepositAmount = p.Input.DailyDepositAmount;
+				modifyRow.DailyDepositHandlingFee = p.Input.DailyDepositHandlingFee;
+				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
+				modifyRow.DailyWithdrawHandlingFee = p.Input.DailyWithdrawHandlingFee;
 				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
 				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
 				modifyRow.DepositPlayers = p.Input.DepositPlayers;
