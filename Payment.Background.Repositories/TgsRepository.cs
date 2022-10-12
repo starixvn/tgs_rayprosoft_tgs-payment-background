@@ -103,6 +103,7 @@ internal class TgsRepository : ITgsRepository
 							DS.player_code,
 							DS.""date"",
 							DS.deposit_amount,
+							DS.deposit_handling_fee,
 							DS.deposit_count,
 							COALESCE(TFD.first_deposit_on, DS.daily_first_deposit_on) AS daily_first_deposit_on,
 							COALESCE(TFD.first_deposit_amount, DS.daily_first_deposit_amount) AS daily_first_deposit_amount,
@@ -531,6 +532,10 @@ internal class TgsRepository : ITgsRepository
 						(
 							SELECT
 								PS.player_code,
+								PS.daily_deposit_amount,
+								PS.daily_deposit_handling_fee,
+								PS.daily_withdraw_amount,
+								PS.daily_withdraw_handling_fee,
 								CASE
 									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
 									ELSE 0
