@@ -90,7 +90,7 @@ public class AgentDailyPaymentHandlerTests
 	}
 
 	[TestMethod]
-	public async Task Reprocess_PlayerDailyPaymentStatisics_Data()
+	public async Task Reprocess_PlayerDailyPaymentStatistics_Data()
 	{
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakeMessageSender = Substitute.For<IMessageSender>();

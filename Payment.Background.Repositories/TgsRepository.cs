@@ -37,15 +37,20 @@ internal class TgsRepository : ITgsRepository
 					COALESCE(D.player_code, W.player_code) AS player_code,
 					COALESCE(D.date, W.date) AS report_date,
 					D.deposit_amount AS daily_deposit_amount,
+					D.deposit_handling_fee AS daily_deposit_handling_fee,
 					D.deposit_count AS daily_deposit_count,
 					D.daily_first_deposit_on AS first_deposit_on,
 					D.daily_first_deposit_amount AS first_deposit_amount,
+					D.daily_first_deposit_handling_fee AS first_deposit_handling_fee,
 					D.total_deposit_count,
 					D.total_deposit_amount,
+					D.total_deposit_handling_fee,
 					W.withdraw_amount AS daily_withdraw_amount,
 					W.withdraw_count AS daily_withdraw_count,
+					W.withdraw_handling_fee AS daily_withdraw_handling_fee,
 					W.total_withdraw_count,
-					W.total_withdraw_amount
+					W.total_withdraw_amount,
+					W.total_withdraw_handling_fee
 				FROM
 					(
 						WITH depositStatistics
@@ -53,8 +58,10 @@ internal class TgsRepository : ITgsRepository
 							player_code,
 							""date"",
 							deposit_amount,
+							deposit_handling_fee,
 							daily_first_deposit_on,
 							daily_first_deposit_amount,
+							daily_first_deposit_handling_fee,
 							deposit_count
 						)
 						AS
@@ -63,17 +70,21 @@ internal class TgsRepository : ITgsRepository
 								player_code,
 								date,
 								Sum(deposit_amount) AS deposit_amount,
+								Sum(handling_fee) AS deposit_handling_fee,
 								Min(daily_first_deposit_on) AS daily_first_deposit_on,
 								Min(daily_first_deposit_amount) AS daily_first_deposit_amount,
-								Count(1) as deposit_count
+								Min(daily_first_deposit_handling_fee) AS daily_first_deposit_handling_fee,
+								Count(1) AS deposit_count
 							FROM
 								(
 									SELECT
 										player_code,
 										(updated_on at time zone 'Asia/Shanghai')::date AS date,
 										COALESCE(actual_amount, amount) AS deposit_amount,
+										handling_fee AS handling_fee,
 										First_Value(updated_on) OVER w AS daily_first_deposit_on,
-										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount
+										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount,
+										First_Value(handling_fee) OVER w AS daily_first_deposit_handling_fee
 									FROM
 										dbo.deposit_forms
 									WHERE
@@ -92,11 +103,14 @@ internal class TgsRepository : ITgsRepository
 							DS.player_code,
 							DS.""date"",
 							DS.deposit_amount,
+							DS.deposit_handling_fee,
 							DS.deposit_count,
 							COALESCE(TFD.first_deposit_on, DS.daily_first_deposit_on) AS daily_first_deposit_on,
 							COALESCE(TFD.first_deposit_amount, DS.daily_first_deposit_amount) AS daily_first_deposit_amount,
+							COALESCE(TFD.first_deposit_handling_fee, DS.daily_first_deposit_handling_fee) AS daily_first_deposit_handling_fee,
 							DS.deposit_count + COALESCE(TFD.total_deposit_count, 0) AS total_deposit_count,
-							DS.deposit_amount + COALESCE(TFD.total_deposit_amount, 0) AS total_deposit_amount
+							DS.deposit_amount + COALESCE(TFD.total_deposit_amount, 0) AS total_deposit_amount,
+							DS.deposit_handling_fee + COALESCE(TFD.total_deposit_handling_fee, 0) AS total_deposit_handling_fee
 						FROM
 							depositStatistics AS DS
 							LEFT JOIN
@@ -106,8 +120,10 @@ internal class TgsRepository : ITgsRepository
 									Max(PS.report_date) AS report_date,
 									Max(PS.total_deposit_count) AS total_deposit_count,
 									Max(PS.total_deposit_amount) AS total_deposit_amount,
+									Max(PS.total_deposit_handling_fee) as total_deposit_handling_fee,
 									Min(PS.first_deposit_on) AS first_deposit_on,
-									Min(PS.first_deposit_amount) As first_deposit_amount
+									Min(PS.first_deposit_amount) AS first_deposit_amount,
+									Min(PS.first_deposit_handling_fee) AS first_deposit_handling_fee
 								FROM
 									dbo.player_daily_payment_statistics AS PS
 									JOIN
@@ -125,6 +141,7 @@ internal class TgsRepository : ITgsRepository
 							player_code,
 							""date"",
 							withdraw_amount,
+							withdraw_handling_fee,
 							withdraw_count
 						)
 						AS
@@ -133,6 +150,7 @@ internal class TgsRepository : ITgsRepository
 								user_id,
 								(paid_on at time zone 'Asia/Shanghai')::date AS date,
 								Sum(COALESCE(actual_amount, amount)) AS withdraw_amount,
+								Sum(handling_fee) AS withdraw_handling_fee,
 								Count(1) AS withdraw_count
 							FROM
 								dbo.withdraw_forms
@@ -154,7 +172,9 @@ internal class TgsRepository : ITgsRepository
 							WS.withdraw_amount,
 							WS.withdraw_count,
 							WS.withdraw_count + COALESCE(TFW.total_withdraw_count, 0) AS total_withdraw_count,
-							WS.withdraw_amount + COALESCE(TFw.total_withdraw_amount, 0) AS total_withdraw_amount
+							WS.withdraw_amount + COALESCE(TFw.total_withdraw_amount, 0) AS total_withdraw_amount,
+							WS.withdraw_handling_fee,
+							WS.withdraw_handling_fee + COALESCE(TFW.total_withdraw_handling_fee, 0) AS total_withdraw_handling_fee
 						FROM
 							withdrawStatistics AS WS
 							LEFT JOIN
@@ -162,7 +182,8 @@ internal class TgsRepository : ITgsRepository
 								SELECT
 									PS.player_code,
 									Max(PS.total_withdraw_count) AS total_withdraw_count,
-									Max(PS.total_withdraw_amount) AS total_withdraw_amount
+									Max(PS.total_withdraw_amount) AS total_withdraw_amount,
+									Max(PS.total_withdraw_handling_fee) AS total_withdraw_handling_fee
 								FROM
 									dbo.player_daily_payment_statistics AS PS
 									JOIN
@@ -205,14 +226,19 @@ internal class TgsRepository : ITgsRepository
 			{
 				var modifyRow = p.Db;
 				modifyRow.DailyDepositAmount = p.Input.DailyDepositAmount;
+				modifyRow.DailyDepositHandlingFee = p.Input.DailyDepositHandlingFee;
 				modifyRow.DailyDepositCount = p.Input.DailyDepositCount;
 				modifyRow.TotalDepositAmount = p.Input.TotalDepositAmount;
+				modifyRow.TotalDepositHandlingFee = p.Input.TotalDepositHandlingFee;
 				modifyRow.TotalDepositCount = p.Input.TotalDepositCount;
 				modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
 				modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
+				modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
 				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
+				modifyRow.DailyWithdrawHandlingFee = p.Input.DailyWithdrawHandlingFee;
 				modifyRow.DailyWithdrawCount = p.Input.DailyWithdrawCount;
 				modifyRow.TotalWithdrawAmount = p.Input.TotalWithdrawAmount;
+				modifyRow.TotalWithdrawHandlingFee = p.Input.TotalWithdrawHandlingFee;
 				modifyRow.TotalWithdrawCount = p.Input.TotalWithdrawCount;
 			}
 			else
@@ -274,6 +300,10 @@ internal class TgsRepository : ITgsRepository
 			.FromSqlInterpolated($@"
 				WITH CTE(
 					player_code,
+					daily_deposit_amount,
+					daily_deposit_handling_fee,
+					daily_withdraw_amount,
+					daily_withdraw_handling_fee,
 					is_first_deposit,
 					un_second_deposit
 				)
@@ -281,6 +311,10 @@ internal class TgsRepository : ITgsRepository
 				(
 					SELECT
 						COALESCE(FD.player_code, SD.player_code) AS player_code,
+						FD.daily_deposit_amount,
+						FD.daily_deposit_handling_fee,
+						FD.daily_withdraw_amount,
+						FD.daily_withdraw_handling_fee,
 						FD.is_first_deposit,
 						CASE
 							WHEN SD.player_code IS NULL THEN 0
@@ -290,6 +324,10 @@ internal class TgsRepository : ITgsRepository
 						(
 							SELECT
 								PS.player_code,
+								PS.daily_deposit_amount,
+								PS.daily_deposit_handling_fee,
+								PS.daily_withdraw_amount,
+								PS.daily_withdraw_handling_fee,
 								CASE
 									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
 									ELSE 0
@@ -317,6 +355,10 @@ internal class TgsRepository : ITgsRepository
 					P.agent_id,
 					P.brand_id,
 					{queryDate} AS report_date,
+					Sum(CTE.daily_deposit_amount) AS daily_deposit_amount,
+					Sum(CTE.daily_deposit_handling_fee) AS daily_deposit_handling_fee,
+					Sum(CTE.daily_withdraw_amount) AS daily_withdraw_amount,
+					Sum(CTE.daily_withdraw_handling_fee) AS daily_withdraw_handling_fee,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
 					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
 					Count(CTE.is_first_deposit) AS deposit_players
@@ -361,6 +403,10 @@ internal class TgsRepository : ITgsRepository
 			if (p.Db is not null)
 			{
 				var modifyRow = p.Db;
+				modifyRow.DailyDepositAmount = p.Input.DailyDepositAmount;
+				modifyRow.DailyDepositHandlingFee = p.Input.DailyDepositHandlingFee;
+				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
+				modifyRow.DailyWithdrawHandlingFee = p.Input.DailyWithdrawHandlingFee;
 				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
 				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
 				modifyRow.DepositPlayers = p.Input.DepositPlayers;
@@ -462,6 +508,10 @@ internal class TgsRepository : ITgsRepository
 			.FromSqlInterpolated($@"
 				WITH CTE(
 					player_code,
+					daily_deposit_amount,
+					daily_deposit_handling_fee,
+					daily_withdraw_amount,
+					daily_withdraw_handling_fee,
 					is_first_deposit,
 					un_second_deposit
 				)
@@ -469,6 +519,10 @@ internal class TgsRepository : ITgsRepository
 				(
 					SELECT
 						COALESCE(FD.player_code, SD.player_code) AS player_code,
+						FD.daily_deposit_amount,
+						FD.daily_deposit_handling_fee,
+						FD.daily_withdraw_amount,
+						FD.daily_withdraw_handling_fee,
 						FD.is_first_deposit,
 						CASE
 							WHEN SD.player_code IS NULL THEN 0
@@ -478,6 +532,10 @@ internal class TgsRepository : ITgsRepository
 						(
 							SELECT
 								PS.player_code,
+								PS.daily_deposit_amount,
+								PS.daily_deposit_handling_fee,
+								PS.daily_withdraw_amount,
+								PS.daily_withdraw_handling_fee,
 								CASE
 									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
 									ELSE 0
@@ -504,6 +562,10 @@ internal class TgsRepository : ITgsRepository
 				SELECT
 					P.brand_id,
 					{queryDate} AS report_date,
+					Sum(CTE.daily_deposit_amount) as daily_deposit_amount,
+					Sum(CTE.daily_deposit_handling_fee) as daily_deposit_handling_fee,
+					Sum(CTE.daily_withdraw_amount) as daily_withdraw_amount,
+					Sum(CTE.daily_withdraw_handling_fee) as daily_withdraw_handling_fee,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
 					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
 					Count(CTE.is_first_deposit) AS deposit_players
@@ -545,6 +607,10 @@ internal class TgsRepository : ITgsRepository
 			if (p.Db is not null)
 			{
 				var modifyRow = p.Db;
+				modifyRow.DailyDepositAmount = p.Input.DailyDepositAmount;
+				modifyRow.DailyDepositHandlingFee = p.Input.DailyDepositHandlingFee;
+				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
+				modifyRow.DailyWithdrawHandlingFee = p.Input.DailyWithdrawHandlingFee;
 				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
 				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
 				modifyRow.DepositPlayers = p.Input.DepositPlayers;

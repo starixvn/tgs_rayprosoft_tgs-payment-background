@@ -26,5 +26,6 @@ namespace Tgs.Payment.Background.Repositories.Entities
         public string? ReviewedUserName { get; set; }
         public string? OrderNo { get; set; }
         public int? PromotionPlayerId { get; set; }
+        public decimal HandlingFee { get; set; }
     }
 }
