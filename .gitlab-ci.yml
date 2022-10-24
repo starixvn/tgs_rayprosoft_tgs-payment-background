@@ -129,6 +129,7 @@ deploy-dev:
         "autoscaling": $autoscaling
       }
       EOF
+    - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
 
 deploy-staging:
   variables:
@@ -176,6 +177,7 @@ deploy-staging:
         "autoscaling": $autoscaling
       }
       EOF
+    - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
 
 deploy-prod:
   variables:
@@ -223,3 +225,4 @@ deploy-prod:
         "autoscaling": $autoscaling
       }
       EOF
+    - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
