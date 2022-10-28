@@ -26,7 +26,6 @@ public class ScheduleController : ControllerBase
 	[HttpPost("player/{processDate}", Name = "QueueProcessPlayerPaymentStatisticsJobWithProcessDate")]
 	[SuccessStatusCode(202)]
 	public void QueueProcessPlayerPaymentStatisticsJobWithProcessDate(
-		[FromServices] IMessageSender messageSender,
 		DateOnly processDate)
 	{
 		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
@@ -37,7 +36,6 @@ public class ScheduleController : ControllerBase
 	[HttpPost("agent/{processDate}", Name = "QueueProcessAgentPaymentStatisticsJobWithProcessDate")]
 	[SuccessStatusCode(202)]
 	public void QueueProcessAgentPaymentStatisticsJobWithProcessDate(
-		[FromServices] IMessageSender messageSender,
 		DateOnly processDate)
 	{
 		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
@@ -48,7 +46,6 @@ public class ScheduleController : ControllerBase
 	[HttpPost("brand/{processDate}", Name = "QueueProcessBrandPaymentStatisticsJobWithProcessDate")]
 	[SuccessStatusCode(202)]
 	public void QueueProcessBrandPaymentStatisticsJobWithProcessDate(
-		[FromServices] IMessageSender messageSender,
 		DateOnly processDate)
 	{
 		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(

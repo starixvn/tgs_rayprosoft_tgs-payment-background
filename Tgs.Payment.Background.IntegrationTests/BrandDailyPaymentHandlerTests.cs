@@ -1,12 +1,11 @@
-﻿using System;
-using Google.Protobuf;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿using Google.Protobuf;
 using NSubstitute;
 using Tgs.MessageQueue;
 using Tgs.Payment.Background.MessageQueue;
 using Tgs.Payment.Background.Protos;
 
 namespace Tgs.Payment.Background.IntegrationTests;
+
 [TestClass]
 public class BrandDailyPaymentHandlerTests
 {
@@ -91,7 +90,7 @@ public class BrandDailyPaymentHandlerTests
 	}
 
 	[TestMethod]
-	public async Task Reprocess_PlayerDailyPaymentStatisics_Data()
+	public async Task Reprocess_PlayerDailyPaymentStatistics_Data()
 	{
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakeMessageSender = Substitute.For<IMessageSender>();

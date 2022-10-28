@@ -13,5 +13,9 @@ namespace Tgs.Payment.Background.Repositories.Entities
         public int FirstDepositPlayers { get; set; }
         public int UndepositAgainPlayers { get; set; }
         public int DepositPlayers { get; set; }
+        public decimal? DailyDepositAmount { get; set; }
+        public decimal? DailyDepositHandlingFee { get; set; }
+        public decimal? DailyWithdrawAmount { get; set; }
+        public decimal? DailyWithdrawHandlingFee { get; set; }
     }
 }

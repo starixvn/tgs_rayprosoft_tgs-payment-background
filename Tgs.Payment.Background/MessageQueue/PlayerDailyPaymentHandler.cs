@@ -39,7 +39,7 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 			var diffDays = (requestDate.Value.ToDateTime(TimeOnly.MinValue)
 				- lastProcessDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
 
-			for (int i = 1; i < diffDays; i++)
+			for (var i = 1; i < diffDays; i++)
 				await _tgsRepository
 					.ProcessPlayerDailyPaymentStatisticsAsync(
 						lastProcessDate.Value.AddDays(i),
@@ -55,7 +55,7 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 			var diffDays = (lastProcessDate.Value.ToDateTime(TimeOnly.MinValue)
 				- requestDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
 
-			for (int i = 0; i < diffDays; i++)
+			for (var i = 0; i < diffDays; i++)
 				await _tgsRepository
 					.ProcessPlayerDailyPaymentStatisticsAsync(
 						requestDate.Value.AddDays(i),
