@@ -18,7 +18,6 @@ build-code:
   only:
     - merge_requests    
     - main
-    - develop
   cache:
     key: PaymentBackground.$CI_PIPELINE_ID
     untracked: true
@@ -32,7 +31,6 @@ unit-test:
   only:
     - merge_requests
     - main
-    - develop
   cache:
     key: PaymentBackground.$CI_PIPELINE_ID
     untracked: true
@@ -49,7 +47,6 @@ push-docker-image:
     - unit-test
   only:
     - main
-    - develop
   script:
     - export Tag="$(date -d $CI_PIPELINE_CREATED_AT +%Y%m%d%H%M).$CI_PIPELINE_IID"
     - dotnet build "Tgs.Payment.Background/Tgs.Payment.Background.csproj" -c $BuildConfiguration -t:ContainerBuild -p:DockerfileTag="$ImageName:$Tag" --no-restore
@@ -65,7 +62,6 @@ push-k8s-template:
     - unit-test
   only:
     - main
-    - develop
   script:
     - export Tag="$(date -d $CI_PIPELINE_CREATED_AT +%Y%m%d%H%M).$CI_PIPELINE_IID"
     - mkdir -p artifacts/k8s
@@ -96,7 +92,6 @@ deploy-dev:
       artifacts: true
   only:
     - main
-    - develop
   before_script:
     - export KUBECONFIG=$KubeConfig_Raypro_dev
   script:
