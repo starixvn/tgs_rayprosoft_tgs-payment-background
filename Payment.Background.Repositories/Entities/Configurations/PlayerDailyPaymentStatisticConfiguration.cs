@@ -27,11 +27,17 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
 
             entity.Property(e => e.DailyDepositCount).HasColumnName("daily_deposit_count");
 
+            entity.Property(e => e.DailyDepositHandlingFee).HasColumnName("daily_deposit_handling_fee");
+
             entity.Property(e => e.DailyWithdrawAmount).HasColumnName("daily_withdraw_amount");
 
             entity.Property(e => e.DailyWithdrawCount).HasColumnName("daily_withdraw_count");
 
+            entity.Property(e => e.DailyWithdrawHandlingFee).HasColumnName("daily_withdraw_handling_fee");
+
             entity.Property(e => e.FirstDepositAmount).HasColumnName("first_deposit_amount");
+
+            entity.Property(e => e.FirstDepositHandlingFee).HasColumnName("first_deposit_handling_fee");
 
             entity.Property(e => e.FirstDepositOn).HasColumnName("first_deposit_on");
 
@@ -39,9 +45,13 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
 
             entity.Property(e => e.TotalDepositCount).HasColumnName("total_deposit_count");
 
+            entity.Property(e => e.TotalDepositHandlingFee).HasColumnName("total_deposit_handling_fee");
+
             entity.Property(e => e.TotalWithdrawAmount).HasColumnName("total_withdraw_amount");
 
             entity.Property(e => e.TotalWithdrawCount).HasColumnName("total_withdraw_count");
+
+            entity.Property(e => e.TotalWithdrawHandlingFee).HasColumnName("total_withdraw_handling_fee");
 
             OnConfigurePartial(entity);
         }

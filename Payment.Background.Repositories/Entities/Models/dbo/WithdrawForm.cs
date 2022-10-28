@@ -32,5 +32,6 @@ namespace Tgs.Payment.Background.Repositories.Entities
         public string? PaidUserName { get; set; }
         public string? OrderNo { get; set; }
         public string? Note { get; set; }
+        public decimal HandlingFee { get; set; }
     }
 }
