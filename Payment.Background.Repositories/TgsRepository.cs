@@ -329,6 +329,7 @@ internal class TgsRepository : ITgsRepository
 								PS.daily_withdraw_amount,
 								PS.daily_withdraw_handling_fee,
 								CASE
+									WHEN PS.daily_deposit_amount IS NULL THEN NULL
 									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
 									ELSE 0
 								END AS is_first_deposit
@@ -537,6 +538,7 @@ internal class TgsRepository : ITgsRepository
 								PS.daily_withdraw_amount,
 								PS.daily_withdraw_handling_fee,
 								CASE
+									WHEN PS.daily_deposit_amount IS NULL THEN NULL
 									WHEN PS.report_date = (PS.first_deposit_on AT TIME ZONE 'Asia/Shanghai')::date THEN 1
 									ELSE 0
 								END AS is_first_deposit
