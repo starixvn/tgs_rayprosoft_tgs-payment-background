@@ -30,6 +30,9 @@ push-docker-image:
 
 push-k8s-template:
   extends: .push-k8s-template
+  script:
+    - !reference [.push-k8s-template, script]
+    - cp deployment/k8s/cronjob.yaml artifacts/k8s/
 
 deploy-dev:
   extends: .deploy-template
