@@ -32,7 +32,7 @@ internal class TgsRepository : ITgsRepository
 				TimeSpan.Zero));
 
 		var processData = await _tgsContext.PlayerDailyPaymentStatistics
-			.FromSqlInterpolated($@"
+			.FromSqlInterpolated($"""
 				SELECT
 					COALESCE(D.player_code, W.player_code) AS player_code,
 					COALESCE(D.date, W.date) AS report_date,
@@ -56,7 +56,7 @@ internal class TgsRepository : ITgsRepository
 						WITH depositStatistics
 						(
 							player_code,
-							""date"",
+							"date",
 							deposit_amount,
 							deposit_handling_fee,
 							daily_first_deposit_on,
@@ -97,11 +97,11 @@ internal class TgsRepository : ITgsRepository
 								) AS T
 							GROUP BY
 								player_code,
-								""date""
+								"date"
 						)
 						SELECT
 							DS.player_code,
-							DS.""date"",
+							DS."date",
 							DS.deposit_amount,
 							DS.deposit_handling_fee,
 							DS.deposit_count,
@@ -139,9 +139,12 @@ internal class TgsRepository : ITgsRepository
 						WITH withdrawStatistics
 						(
 							player_code,
-							""date"",
+							"date",
 							withdraw_amount,
 							withdraw_handling_fee,
+				            daily_first_withdraw_on,
+							daily_first_withdraw_amount,
+							daily_first_withdraw_handling_fee,
 							withdraw_count
 						)
 						AS
@@ -149,32 +152,50 @@ internal class TgsRepository : ITgsRepository
 							SELECT
 								user_id,
 								(paid_on at time zone 'Asia/Shanghai')::date AS date,
-								Sum(COALESCE(actual_amount, amount)) AS withdraw_amount,
+								Sum(withdraw_amount) AS withdraw_amount,
 								Sum(handling_fee) AS withdraw_handling_fee,
+				                Min(daily_first_withdraw_on) AS daily_first_withdraw_on,
+				                Min(daily_first_withdraw_amount) AS daily_first_withdraw_amount,
+				                Min(daily_first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee,
 								Count(1) AS withdraw_count
 							FROM
-								dbo.withdraw_forms
-							WHERE
-								status = 9000
-								AND
-								user_type = 1
-								AND
-								paid_on >= {queryTimeRange.From}
-								AND
-								paid_on < {queryTimeRange.To}
+								(
+									SELECT
+										user_id,
+										paid_on,
+										COALESCE(actual_amount, amount) AS withdraw_amount,
+										handling_fee,
+										First_Value(paid_on) OVER w AS daily_first_withdraw_on,
+				                        First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_withdraw_amount,
+				                        First_Value(handling_fee) OVER w AS daily_first_withdraw_handling_fee
+									FROM
+										dbo.withdraw_forms
+									WHERE
+				                        status = 9000
+				                        AND
+				                        user_type = 1
+				                        AND
+				                        paid_on >= {queryTimeRange.From}
+				                        AND
+				                        paid_on < {queryTimeRange.To}
+									WINDOW w AS (PARTITION BY user_id ORDER BY paid_on ASC)
+				                ) AS T
 							GROUP BY
 								user_id,
 								date
 						)
 						SELECT
 							WS.player_code,
-							WS.""date"",
+							WS."date",
 							WS.withdraw_amount,
 							WS.withdraw_count,
+							WS.withdraw_handling_fee,
 							WS.withdraw_count + COALESCE(TFW.total_withdraw_count, 0) AS total_withdraw_count,
 							WS.withdraw_amount + COALESCE(TFw.total_withdraw_amount, 0) AS total_withdraw_amount,
-							WS.withdraw_handling_fee,
-							WS.withdraw_handling_fee + COALESCE(TFW.total_withdraw_handling_fee, 0) AS total_withdraw_handling_fee
+							WS.withdraw_handling_fee + COALESCE(TFW.total_withdraw_handling_fee, 0) AS total_withdraw_handling_fee,
+							COALESCE(TFW.first_withdraw_on, WS.daily_first_withdraw_on) AS daily_first_deposit_on,
+							COALESCE(TFW.first_withdraw_amount, WS.daily_first_withdraw_amount) AS daily_first_deposit_amount,
+							COALESCE(TFW.first_withdraw_handling_fee, WS.daily_first_withdraw_handling_fee) AS daily_first_deposit_handling_fee
 						FROM
 							withdrawStatistics AS WS
 							LEFT JOIN
@@ -183,7 +204,10 @@ internal class TgsRepository : ITgsRepository
 									PS.player_code,
 									Max(PS.total_withdraw_count) AS total_withdraw_count,
 									Max(PS.total_withdraw_amount) AS total_withdraw_amount,
-									Max(PS.total_withdraw_handling_fee) AS total_withdraw_handling_fee
+									Max(PS.total_withdraw_handling_fee) AS total_withdraw_handling_fee,
+									Min(PS.first_withdraw_on) AS first_withdraw_on,
+									Min(PS.first_withdraw_amount) AS first_withdraw_amount,
+									Min(PS.first_withdraw_handling_fee) AS first_withdraw_handling_fee
 								FROM
 									dbo.player_daily_payment_statistics AS PS
 									JOIN
@@ -194,7 +218,8 @@ internal class TgsRepository : ITgsRepository
 									PS.player_code
 							) AS TFW ON WS.player_code = TFW.player_code
 					) AS W ON D.player_code = W.player_code
-						AND D.date = W.date")
+						AND D.date = W.date
+				""")
 			.AsNoTracking()
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
@@ -240,6 +265,9 @@ internal class TgsRepository : ITgsRepository
 				modifyRow.TotalWithdrawAmount = p.Input.TotalWithdrawAmount;
 				modifyRow.TotalWithdrawHandlingFee = p.Input.TotalWithdrawHandlingFee;
 				modifyRow.TotalWithdrawCount = p.Input.TotalWithdrawCount;
+				modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
+				modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
+				modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
 			}
 			else
 				_ = await _tgsContext.PlayerDailyPaymentStatistics
@@ -297,7 +325,7 @@ internal class TgsRepository : ITgsRepository
 		var undepositAgainCheckDate = processDate.AddDays(-3);
 
 		var processData = await _tgsContext.AgentDailyPaymentStatistics
-			.FromSqlInterpolated($@"
+			.FromSqlInterpolated($"""
 				WITH CTE(
 					player_code,
 					daily_deposit_amount,
@@ -371,7 +399,8 @@ internal class TgsRepository : ITgsRepository
 					P.agent_id IS NOT NULL
 				GROUP BY
 					P.brand_id,
-					P.agent_id")
+					P.agent_id
+				""")
 			.AsNoTracking()
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
