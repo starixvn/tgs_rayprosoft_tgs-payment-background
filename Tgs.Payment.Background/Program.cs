@@ -1,4 +1,4 @@
-using Hangfire;
+﻿using Hangfire;
 using Hangfire.MemoryStorage;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
@@ -21,23 +21,18 @@ builder.Logging
 		options.ParseStateValues = true;
 		_ = options.AddFluentdForwardExporter(fluentOptions =>
 		{
-			var nodeIp = builder.Configuration.GetValue<string>("NODE_IP");
+			var nodeIp = builder.Configuration.GetValue<string>("NODE_IP")!;
 			fluentOptions.Host = nodeIp;
-			fluentOptions.Tag = builder.Configuration.GetValue<string>("OTEL_SERVICE_NAME");
+			fluentOptions.Tag = builder.Configuration.GetValue<string>("OTEL_SERVICE_NAME")!;
 			fluentOptions.UseMessagePack();
 		});
 	});
 
 builder.Services
+	.AddDateOnlyTimeOnlyStringConverters()
 	.AddRouting(options => options.LowercaseUrls = true)
 	.AddControllers()
-	.AddMvcOptions(mvcOptions =>
-	{
-		mvcOptions.AddWebApiToolkitFilters();
-		_ = mvcOptions.UseDateOnlyTimeOnlyStringConverters();
-	})
-	.AddJsonOptions(jsonOpt => jsonOpt
-		.UseDateOnlyTimeOnlyStringConverters());
+	.AddMvcOptions(mvcOptions => mvcOptions.AddWebApiToolkitFilters());
 
 builder.Services
 	.AddPaymentBackgroundRepositories((_, dbOptions) => dbOptions
@@ -50,7 +45,7 @@ builder.Services
 		{
 			var config = sp.GetRequiredService<IConfiguration>();
 
-			options.Url = config.GetConnectionString("Nats");
+			options.Url = config.GetConnectionString("Nats")!;
 		})
 		.AddReplyHandler<PlayerDailyPaymentHandler>("tgs.payment.background.player", "tgs.payment.background.player")
 		.AddReplyHandler<AgentDailyPaymentHandler>("tgs.payment.background.agent", "tgs.payment.background.agent")
