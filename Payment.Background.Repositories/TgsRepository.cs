@@ -196,9 +196,9 @@ internal class TgsRepository : ITgsRepository
 							WS.withdraw_count + COALESCE(TFW.total_withdraw_count, 0) AS total_withdraw_count,
 							WS.withdraw_amount + COALESCE(TFw.total_withdraw_amount, 0) AS total_withdraw_amount,
 							WS.withdraw_handling_fee + COALESCE(TFW.total_withdraw_handling_fee, 0) AS total_withdraw_handling_fee,
-							COALESCE(TFW.first_withdraw_on, WS.daily_first_withdraw_on) AS daily_first_deposit_on,
-							COALESCE(TFW.first_withdraw_amount, WS.daily_first_withdraw_amount) AS daily_first_deposit_amount,
-							COALESCE(TFW.first_withdraw_handling_fee, WS.daily_first_withdraw_handling_fee) AS daily_first_deposit_handling_fee
+							COALESCE(TFW.first_withdraw_on, WS.daily_first_withdraw_on) AS daily_first_withdraw_on,
+							COALESCE(TFW.first_withdraw_amount, WS.daily_first_withdraw_amount) AS daily_first_withdraw_amount,
+							COALESCE(TFW.first_withdraw_handling_fee, WS.daily_first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee
 						FROM
 							withdrawStatistics AS WS
 							LEFT JOIN
