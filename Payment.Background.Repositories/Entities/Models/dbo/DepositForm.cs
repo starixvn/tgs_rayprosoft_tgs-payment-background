@@ -3,29 +3,51 @@
 using System;
 using System.Collections.Generic;
 
-namespace Tgs.Payment.Background.Repositories.Entities
+namespace Tgs.Payment.Background.Repositories.Entities;
+
+public partial class DepositForm
 {
-    public partial class DepositForm
-    {
-        public Guid Id { get; set; }
-        public decimal? ActualAmount { get; set; }
-        public decimal Amount { get; set; }
-        public string? ApplyInfo { get; set; }
-        public Guid BrandId { get; set; }
-        public Guid BrandPaymentId { get; set; }
-        public DateTime CreatedOn { get; set; }
-        public string? PaymentReturn { get; set; }
-        public string PlayerCode { get; set; } = null!;
-        public Guid? PromotionId { get; set; }
-        public string? Remark { get; set; }
-        public int Status { get; set; }
-        public DateTime UpdatedOn { get; set; }
-        public string? ThirdPartyOrderNo { get; set; }
-        public DateTime? ReviewedOn { get; set; }
-        public string? ReviewedUserId { get; set; }
-        public string? ReviewedUserName { get; set; }
-        public string? OrderNo { get; set; }
-        public int? PromotionPlayerId { get; set; }
-        public decimal HandlingFee { get; set; }
-    }
+    public Guid Id { get; set; }
+
+    public decimal? ActualAmount { get; set; }
+
+    public decimal Amount { get; set; }
+
+    public string? ApplyInfo { get; set; }
+
+    public Guid BrandId { get; set; }
+
+    public Guid BrandPaymentId { get; set; }
+
+    public DateTime CreatedOn { get; set; }
+
+    public string? PaymentReturn { get; set; }
+
+    public string PlayerCode { get; set; } = null!;
+
+    public Guid? PromotionId { get; set; }
+
+    public string? Remark { get; set; }
+
+    public int Status { get; set; }
+
+    public DateTime UpdatedOn { get; set; }
+
+    public string? ThirdPartyOrderNo { get; set; }
+
+    public DateTime? ReviewedOn { get; set; }
+
+    public string? ReviewedUserId { get; set; }
+
+    public string? ReviewedUserName { get; set; }
+
+    public string? OrderNo { get; set; }
+
+    public int? PromotionPlayerId { get; set; }
+
+    public decimal HandlingFee { get; set; }
+
+    public Guid? SnapshotEventId { get; set; }
+
+    public virtual Player PlayerCodeNavigation { get; set; } = null!;
 }

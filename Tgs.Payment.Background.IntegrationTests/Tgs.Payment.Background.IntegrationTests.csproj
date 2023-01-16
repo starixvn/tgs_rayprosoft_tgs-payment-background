@@ -36,4 +36,8 @@
     <None Include="D:\Users\Phoenix\source\repos\Tgs.Payment.Background\Tgs.Payment.Background.IntegrationTests\.editorconfig" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+  </ItemGroup>
+
 </Project>

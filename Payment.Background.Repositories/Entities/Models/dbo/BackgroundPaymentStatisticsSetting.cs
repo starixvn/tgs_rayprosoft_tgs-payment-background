@@ -3,11 +3,11 @@
 using System;
 using System.Collections.Generic;
 
-namespace Tgs.Payment.Background.Repositories.Entities
+namespace Tgs.Payment.Background.Repositories.Entities;
+
+public partial class BackgroundPaymentStatisticsSetting
 {
-    public partial class BackgroundPaymentStatisticsSetting
-    {
-        public string RecordKey { get; set; } = null!;
-        public DateTime ProcessedTime { get; set; }
-    }
+    public string RecordKey { get; set; } = null!;
+
+    public DateTime ProcessedTime { get; set; }
 }
