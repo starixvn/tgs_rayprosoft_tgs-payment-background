@@ -50,7 +50,10 @@ internal class TgsRepository : ITgsRepository
 					W.withdraw_handling_fee AS daily_withdraw_handling_fee,
 					W.total_withdraw_count,
 					W.total_withdraw_amount,
-					W.total_withdraw_handling_fee
+					W.total_withdraw_handling_fee,
+					W.daily_first_withdraw_on AS first_withdraw_on,
+					W.daily_first_withdraw_amount AS first_withdraw_amount,
+					W.daily_first_withdraw_handling_fee AS first_withdraw_handling_fee
 				FROM
 					(
 						WITH depositStatistics
