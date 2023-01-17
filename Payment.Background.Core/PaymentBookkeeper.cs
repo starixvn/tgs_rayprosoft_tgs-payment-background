@@ -3,6 +3,7 @@ using System.Reactive.Disposables;
 using System.Reactive.Linq;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace Tgs.Payment.Background;
 
@@ -10,13 +11,16 @@ internal class PaymentBookkeeper : BackgroundService
 {
 	private readonly IPaymentOverviewUpdateEventSource _paymentOverviewUpdateEventSource;
 	private readonly IServiceProvider _serviceProvider;
+	private readonly ILogger<PaymentBookkeeper> _logger;
 
 	public PaymentBookkeeper(
 		IPaymentOverviewUpdateEventSource paymentOverviewUpdateEventSource,
-		IServiceProvider serviceProvider)
+		IServiceProvider serviceProvider,
+		ILogger<PaymentBookkeeper> logger)
 	{
 		_paymentOverviewUpdateEventSource = paymentOverviewUpdateEventSource ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateEventSource));
 		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 	}
 
 	protected override Task ExecuteAsync(CancellationToken stoppingToken)
@@ -42,16 +46,23 @@ internal class PaymentBookkeeper : BackgroundService
 						}));
 			})
 			.Select(ob => ob
-				.SelectMany(playerCode => Observable.FromAsync(async ct =>
-				{
-					await using var scope = _serviceProvider.CreateAsyncScope();
+				.SelectMany(playerCode => Observable
+					.FromAsync(async ct =>
+						{
+							await using var scope = _serviceProvider.CreateAsyncScope();
 
-					var tgsRespository = scope.ServiceProvider.GetRequiredService<ITgsRepository>();
+							var tgsRespository = scope.ServiceProvider.GetRequiredService<ITgsRepository>();
 
-					await tgsRespository.UpdatePlayerPaymentOverviewAsync(
-						playerCode,
-						ct).ConfigureAwait(false);
-				})))
+							await tgsRespository.UpdatePlayerPaymentOverviewAsync(
+								playerCode,
+								ct).ConfigureAwait(false);
+						})
+					.Catch((Exception ex) =>
+					{
+						_logger.LogError(ex, "Process player({playerCode}) payment overview occur error.", playerCode);
+
+						return Observable.Empty<System.Reactive.Unit>();
+					})))
 			.Concat()
 			.Subscribe()
 			.Dispose);
