@@ -39,6 +39,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "dbo.player_payment_overview",
+         "ObjectType": 0
+      },
+      {
          "Name": "dbo.players",
          "ObjectType": 0
       },

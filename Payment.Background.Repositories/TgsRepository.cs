@@ -16,23 +16,25 @@ internal class TgsRepository : ITgsRepository
 		_tgsContext = tgsContext ?? throw new ArgumentNullException(nameof(tgsContext));
 	}
 
-	public async ValueTask ProcessPlayerDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
+	public IAsyncEnumerable<string> ProcessPlayerDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
 	{
-		var (From, To) = (processDate.AddDays(-1), processDate);
-		var queryTimeRange = (
-			From: new DateTimeOffset(
-				From
-					.AddDays(-1)
-					.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc),
-				TimeSpan.Zero),
-			To: new DateTimeOffset(
-				To
-					.AddDays(-1)
-					.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc),
-				TimeSpan.Zero));
+		async Task<string[]> InnerProcessPlayerDailyPaymentStatisticsAsync()
+		{
+			var (From, To) = (processDate.AddDays(-1), processDate);
+			var queryTimeRange = (
+				From: new DateTimeOffset(
+					From
+						.AddDays(-1)
+						.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc),
+					TimeSpan.Zero),
+				To: new DateTimeOffset(
+					To
+						.AddDays(-1)
+						.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc),
+					TimeSpan.Zero));
 
-		var processData = await _tgsContext.PlayerDailyPaymentStatistics
-			.FromSqlInterpolated($"""
+			var processData = await _tgsContext.PlayerDailyPaymentStatistics
+				.FromSqlInterpolated($"""
 				SELECT
 					COALESCE(D.player_code, W.player_code) AS player_code,
 					COALESCE(D.date, W.date) AS report_date,
@@ -223,65 +225,76 @@ internal class TgsRepository : ITgsRepository
 					) AS W ON D.player_code = W.player_code
 						AND D.date = W.date
 				""")
-			.AsNoTracking()
-			.ToArrayAsync(cancellationToken: cancellationToken)
-			.ConfigureAwait(false);
+				.AsNoTracking()
+				.ToArrayAsync(cancellationToken: cancellationToken)
+				.ConfigureAwait(false);
 
-		var existsData = await _tgsContext.PlayerDailyPaymentStatistics
-			.Where(row => row.ReportDate == From)
-			.ToArrayAsync(cancellationToken: cancellationToken)
-			.ConfigureAwait(false);
+			var existsData = await _tgsContext.PlayerDailyPaymentStatistics
+				.Where(row => row.ReportDate == From)
+				.ToArrayAsync(cancellationToken: cancellationToken)
+				.ConfigureAwait(false);
 
-		var leftJoin = from input in processData
-					   join db in existsData
-						on new { input.PlayerCode, input.ReportDate } equals new { db.PlayerCode, db.ReportDate } into g
-					   from db in g.DefaultIfEmpty()
-					   select new
-					   {
-						   Input = input,
-						   Db = db
-					   };
+			var leftJoin = from input in processData
+						   join db in existsData
+							on new { input.PlayerCode, input.ReportDate } equals new { db.PlayerCode, db.ReportDate } into g
+						   from db in g.DefaultIfEmpty()
+						   select new
+						   {
+							   Input = input,
+							   Db = db
+						   };
 
-		var rightJoin = from db in existsData
-						join input in processData
-							on new { db.PlayerCode, db.ReportDate } equals new { input.PlayerCode, input.ReportDate } into g
-						from input in g.DefaultIfEmpty()
-						where input is null
-						select db;
+			var rightJoin = from db in existsData
+							join input in processData
+								on new { db.PlayerCode, db.ReportDate } equals new { input.PlayerCode, input.ReportDate } into g
+							from input in g.DefaultIfEmpty()
+							where input is null
+							select db;
 
-		foreach (var p in leftJoin)
-			if (p.Db is not null)
-			{
-				var modifyRow = p.Db;
-				modifyRow.DailyDepositAmount = p.Input.DailyDepositAmount;
-				modifyRow.DailyDepositHandlingFee = p.Input.DailyDepositHandlingFee;
-				modifyRow.DailyDepositCount = p.Input.DailyDepositCount;
-				modifyRow.TotalDepositAmount = p.Input.TotalDepositAmount;
-				modifyRow.TotalDepositHandlingFee = p.Input.TotalDepositHandlingFee;
-				modifyRow.TotalDepositCount = p.Input.TotalDepositCount;
-				modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
-				modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
-				modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
-				modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
-				modifyRow.DailyWithdrawHandlingFee = p.Input.DailyWithdrawHandlingFee;
-				modifyRow.DailyWithdrawCount = p.Input.DailyWithdrawCount;
-				modifyRow.TotalWithdrawAmount = p.Input.TotalWithdrawAmount;
-				modifyRow.TotalWithdrawHandlingFee = p.Input.TotalWithdrawHandlingFee;
-				modifyRow.TotalWithdrawCount = p.Input.TotalWithdrawCount;
-				modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
-				modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
-				modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
-			}
-			else
-				_ = await _tgsContext.PlayerDailyPaymentStatistics
-					.AddAsync(p.Input, cancellationToken)
-					.ConfigureAwait(false);
+			foreach (var p in leftJoin)
+				if (p.Db is not null)
+				{
+					var modifyRow = p.Db;
+					modifyRow.DailyDepositAmount = p.Input.DailyDepositAmount;
+					modifyRow.DailyDepositHandlingFee = p.Input.DailyDepositHandlingFee;
+					modifyRow.DailyDepositCount = p.Input.DailyDepositCount;
+					modifyRow.TotalDepositAmount = p.Input.TotalDepositAmount;
+					modifyRow.TotalDepositHandlingFee = p.Input.TotalDepositHandlingFee;
+					modifyRow.TotalDepositCount = p.Input.TotalDepositCount;
+					modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
+					modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
+					modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
+					modifyRow.DailyWithdrawAmount = p.Input.DailyWithdrawAmount;
+					modifyRow.DailyWithdrawHandlingFee = p.Input.DailyWithdrawHandlingFee;
+					modifyRow.DailyWithdrawCount = p.Input.DailyWithdrawCount;
+					modifyRow.TotalWithdrawAmount = p.Input.TotalWithdrawAmount;
+					modifyRow.TotalWithdrawHandlingFee = p.Input.TotalWithdrawHandlingFee;
+					modifyRow.TotalWithdrawCount = p.Input.TotalWithdrawCount;
+					modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
+					modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
+					modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
+				}
+				else
+					_ = await _tgsContext.PlayerDailyPaymentStatistics
+						.AddAsync(p.Input, cancellationToken)
+						.ConfigureAwait(false);
 
-		_tgsContext.RemoveRange(rightJoin);
+			_tgsContext.RemoveRange(rightJoin);
 
-		_ = await _tgsContext
-			.SaveChangesAsync(cancellationToken)
-			.ConfigureAwait(false);
+			_ = await _tgsContext
+				.SaveChangesAsync(cancellationToken)
+				.ConfigureAwait(false);
+
+			return leftJoin
+				.Select(p => p.Input.PlayerCode)
+				.Concat(rightJoin.Select(p => p.PlayerCode))
+				.Distinct()
+				.ToArray();
+		}
+
+		return InnerProcessPlayerDailyPaymentStatisticsAsync()
+			.ToAsyncEnumerable()
+			.SelectMany(arr => arr.ToAsyncEnumerable());
 	}
 
 	public async ValueTask<DateOnly?> GetPlayerDailyPaymentStatisticsLastProcessDateAsync(CancellationToken cancellationToken = default)
@@ -659,5 +672,74 @@ internal class TgsRepository : ITgsRepository
 		_ = await _tgsContext
 			.SaveChangesAsync(cancellationToken)
 			.ConfigureAwait(false);
+	}
+
+	public async ValueTask UpdatePlayerPaymentOverviewAsync(DateOnly processDate, CancellationToken cancellationToken = default)
+	{
+		var reportDate = processDate.AddDays(-1);
+
+		var updateStatistics = await _tgsContext.PlayerDailyPaymentStatistics
+			.Where(row => row.ReportDate == reportDate)
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		foreach (var row in updateStatistics)
+		{
+			var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
+				new object?[] { row.PlayerCode },
+				cancellationToken: cancellationToken).ConfigureAwait(false)
+				?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
+					new PlayerPaymentOverview
+					{
+						PlayerCode = row.PlayerCode
+					},
+					cancellationToken).ConfigureAwait(false)).Entity;
+
+			updateOverview.TotalDepositAmount = row.TotalDepositAmount ?? 0M;
+			updateOverview.TotalWithdrawAmount = row.TotalWithdrawAmount ?? 0M;
+			updateOverview.FirstDepositAmount = row.FirstDepositAmount;
+			updateOverview.FirstDepositHandlingFee = row.FirstDepositHandlingFee;
+			updateOverview.FirstDepositOn = row.FirstDepositOn;
+			updateOverview.FirstWithdrawAmount = row.FirstWithdrawAmount;
+			updateOverview.FirstWithdrawHandlingFee = row.FirstWithdrawHandlingFee;
+			updateOverview.FirstWithdrawOn = row.FirstWithdrawOn;
+			updateOverview.RecordedBy = row.ReportDate;
+
+			_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+		}
+	}
+
+	public async ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default)
+	{
+		var playerLastestRow = await _tgsContext.PlayerDailyPaymentStatistics
+			.Where(row => row.PlayerCode == playerCode)
+			.OrderByDescending(row => row.ReportDate)
+			.FirstOrDefaultAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		if (playerLastestRow is null)
+			return;
+
+		var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
+				new object?[] { playerLastestRow.PlayerCode },
+				cancellationToken: cancellationToken).ConfigureAwait(false)
+				?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
+					new PlayerPaymentOverview
+					{
+						PlayerCode = playerLastestRow.PlayerCode
+					},
+					cancellationToken).ConfigureAwait(false)).Entity;
+
+		updateOverview.TotalDepositAmount = playerLastestRow.TotalDepositAmount ?? 0M;
+		updateOverview.TotalWithdrawAmount = playerLastestRow.TotalWithdrawAmount ?? 0M;
+		updateOverview.FirstDepositAmount = playerLastestRow.FirstDepositAmount;
+		updateOverview.FirstDepositHandlingFee = playerLastestRow.FirstDepositHandlingFee;
+		updateOverview.FirstDepositOn = playerLastestRow.FirstDepositOn;
+		updateOverview.FirstWithdrawAmount = playerLastestRow.FirstWithdrawAmount;
+		updateOverview.FirstWithdrawHandlingFee = playerLastestRow.FirstWithdrawHandlingFee;
+		updateOverview.FirstWithdrawOn = playerLastestRow.FirstWithdrawOn;
+		updateOverview.RecordedBy = playerLastestRow.ReportDate;
+
+		_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
 }

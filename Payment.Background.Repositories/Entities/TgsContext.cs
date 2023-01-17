@@ -26,6 +26,8 @@ public partial class TgsContext : DbContext
 
     public virtual DbSet<PlayerDailyPaymentStatistic> PlayerDailyPaymentStatistics { get; set; }
 
+    public virtual DbSet<PlayerPaymentOverview> PlayerPaymentOverviews { get; set; }
+
     public virtual DbSet<WithdrawForm> WithdrawForms { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -40,6 +42,7 @@ public partial class TgsContext : DbContext
             modelBuilder.ApplyConfiguration(new Configurations.DepositFormConfiguration());
             modelBuilder.ApplyConfiguration(new Configurations.PlayerConfiguration());
             modelBuilder.ApplyConfiguration(new Configurations.PlayerDailyPaymentStatisticConfiguration());
+            modelBuilder.ApplyConfiguration(new Configurations.PlayerPaymentOverviewConfiguration());
             modelBuilder.ApplyConfiguration(new Configurations.WithdrawFormConfiguration());
         OnModelCreatingPartial(modelBuilder);
     }
