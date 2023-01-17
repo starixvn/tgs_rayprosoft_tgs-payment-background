@@ -1,4 +1,4 @@
-syntax = "proto3";
+﻿syntax = "proto3";
 
 option csharp_namespace = "Tgs.Payment.Background.Protos";
 
@@ -7,4 +7,8 @@ import "phoenix/protobuf/date.proto";
 
 message ProcessRequest {
 	phoenix.protobuf.DateValue process_date = 1;
+}
+
+message UpdatePaymentOverviewRequest {
+	string player_code = 1;
 }

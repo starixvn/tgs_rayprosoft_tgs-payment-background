@@ -6,10 +6,14 @@ namespace Tgs.Payment.Background.MessageQueue;
 public class PlayerDailyPaymentHandler : IMessageHandler
 {
 	private readonly ITgsRepository _tgsRepository;
+	private readonly IPaymentOverviewUpdateSender _paymentOverviewUpdateSender;
 
-	public PlayerDailyPaymentHandler(ITgsRepository tgsRepository)
+	public PlayerDailyPaymentHandler(
+		ITgsRepository tgsRepository,
+		IPaymentOverviewUpdateSender paymentOverviewUpdateSender)
 	{
 		_tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
+		_paymentOverviewUpdateSender = paymentOverviewUpdateSender ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateSender));
 	}
 
 	public async ValueTask HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
@@ -27,12 +31,17 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 
 		if (lastProcessDate is null)
 		{
-			await _tgsRepository
+			var changePlayers = await _tgsRepository
 				.ProcessPlayerDailyPaymentStatisticsAsync(requestDate.Value, cancellationToken)
+				.ToArrayAsync(cancellationToken)
 				.ConfigureAwait(false);
+
 			await _tgsRepository
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
+
+			foreach (var playerCode in changePlayers)
+				_paymentOverviewUpdateSender.Post(playerCode);
 		}
 		else if (requestDate > lastProcessDate)
 		{
@@ -40,11 +49,17 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 				- lastProcessDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
 
 			for (var i = 1; i < diffDays; i++)
-				await _tgsRepository
+			{
+				var changePlayers = await _tgsRepository
 					.ProcessPlayerDailyPaymentStatisticsAsync(
 						lastProcessDate.Value.AddDays(i),
 						cancellationToken)
+					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
+
+				foreach (var playerCode in changePlayers)
+					_paymentOverviewUpdateSender.Post(playerCode);
+			}
 
 			await _tgsRepository
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
@@ -56,11 +71,17 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 				- requestDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
 
 			for (var i = 0; i < diffDays; i++)
-				await _tgsRepository
+			{
+				var changePlayers = await _tgsRepository
 					.ProcessPlayerDailyPaymentStatisticsAsync(
 						requestDate.Value.AddDays(i),
 						cancellationToken)
+					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
+
+				foreach (var playerCode in changePlayers)
+					_paymentOverviewUpdateSender.Post(playerCode);
+			}
 		}
 	}
 }

@@ -35,6 +35,7 @@ builder.Services
 	.AddMvcOptions(mvcOptions => mvcOptions.AddWebApiToolkitFilters());
 
 builder.Services
+	.AddPaymentBackground()
 	.AddPaymentBackgroundRepositories((_, dbOptions) => dbOptions
 		.UseNpgsql("name=Tgs"));
 
