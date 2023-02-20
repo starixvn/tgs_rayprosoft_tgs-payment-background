@@ -824,6 +824,7 @@ internal class TgsRepository : ITgsRepository
 				WHERE
 				    report_date = {reportDate}
 				""")
+			.AsNoTracking()
 			.FirstAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
