@@ -725,7 +725,8 @@ internal class TgsRepository : ITgsRepository
 				    CTE
 				WHERE
 				    report_date = {reportDate}
-				""");
+				""")
+			.AsNoTracking();
 
 		var query = await (from s in updateStatistics
 						   join row in _tgsContext.PlayerPaymentOverviews
@@ -832,21 +833,18 @@ internal class TgsRepository : ITgsRepository
 				new object?[] { updateStatistics.PlayerCode },
 				cancellationToken: cancellationToken).ConfigureAwait(false)
 				?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
-					new PlayerPaymentOverview
-					{
-						PlayerCode = playerLastestRow.PlayerCode
-					},
+					updateStatistics,
 					cancellationToken).ConfigureAwait(false)).Entity;
 
-		updateOverview.TotalDepositAmount = playerLastestRow.TotalDepositAmount ?? 0M;
-		updateOverview.TotalWithdrawAmount = playerLastestRow.TotalWithdrawAmount ?? 0M;
-		updateOverview.FirstDepositAmount = playerLastestRow.FirstDepositAmount;
-		updateOverview.FirstDepositHandlingFee = playerLastestRow.FirstDepositHandlingFee;
-		updateOverview.FirstDepositOn = playerLastestRow.FirstDepositOn;
-		updateOverview.FirstWithdrawAmount = playerLastestRow.FirstWithdrawAmount;
-		updateOverview.FirstWithdrawHandlingFee = playerLastestRow.FirstWithdrawHandlingFee;
-		updateOverview.FirstWithdrawOn = playerLastestRow.FirstWithdrawOn;
-		updateOverview.RecordedBy = playerLastestRow.ReportDate;
+		updateOverview.TotalDepositAmount = updateStatistics.TotalDepositAmount;
+		updateOverview.TotalWithdrawAmount = updateStatistics.TotalWithdrawAmount;
+		updateOverview.FirstDepositAmount = updateStatistics.FirstDepositAmount;
+		updateOverview.FirstDepositHandlingFee = updateStatistics.FirstDepositHandlingFee;
+		updateOverview.FirstDepositOn = updateStatistics.FirstDepositOn;
+		updateOverview.FirstWithdrawAmount = updateStatistics.FirstWithdrawAmount;
+		updateOverview.FirstWithdrawHandlingFee = updateStatistics.FirstWithdrawHandlingFee;
+		updateOverview.FirstWithdrawOn = updateStatistics.FirstWithdrawOn;
+		updateOverview.RecordedBy = updateStatistics.RecordedBy;
 
 		_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
@@ -901,7 +899,8 @@ internal class TgsRepository : ITgsRepository
 				    CTE
 				WHERE
 				    report_date = max_report_date
-				""");
+				""")
+			.AsNoTracking();
 
 		var query = await (from s in updateStatistics
 						   join row in _tgsContext.PlayerPaymentOverviews
