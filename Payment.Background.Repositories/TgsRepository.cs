@@ -749,6 +749,8 @@ internal class TgsRepository : ITgsRepository
 					.ConfigureAwait(false);
 			else
 			{
+				_ = _tgsContext.PlayerPaymentOverviews.Attach(updateInfo.Exists);
+
 				updateInfo.Exists.TotalDepositAmount = updateInfo.Statistics.TotalDepositAmount;
 				updateInfo.Exists.TotalWithdrawAmount = updateInfo.Statistics.TotalWithdrawAmount;
 				updateInfo.Exists.FirstDepositAmount = updateInfo.Statistics.FirstDepositAmount;
@@ -923,6 +925,8 @@ internal class TgsRepository : ITgsRepository
 					.ConfigureAwait(false);
 			else
 			{
+				_ = _tgsContext.PlayerPaymentOverviews.Attach(updateInfo.Exists);
+
 				updateInfo.Exists.TotalDepositAmount = updateInfo.Statistics.TotalDepositAmount;
 				updateInfo.Exists.TotalWithdrawAmount = updateInfo.Statistics.TotalWithdrawAmount;
 				updateInfo.Exists.FirstDepositAmount = updateInfo.Statistics.FirstDepositAmount;
