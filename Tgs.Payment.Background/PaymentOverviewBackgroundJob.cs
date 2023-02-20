@@ -1,0 +1,23 @@
+﻿using Google.Protobuf;
+using Tgs.MessageQueue;
+
+namespace Tgs.Payment.Background;
+
+public class PaymentOverviewBackgroundJob
+{
+	private readonly IMessageSender _messageSender;
+
+	public PaymentOverviewBackgroundJob(IMessageSender messageSender)
+	{
+		_messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
+	}
+
+	public async Task ExecuteAsync()
+	{
+		var request = new Google.Protobuf.WellKnownTypes.Empty();
+
+		await _messageSender
+			.SendAsync("tgs.payment.background.payment-overview.all", request.ToByteArray())
+			.ConfigureAwait(false);
+	}
+}

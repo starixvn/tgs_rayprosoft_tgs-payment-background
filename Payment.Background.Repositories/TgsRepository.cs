@@ -695,7 +695,7 @@ internal class TgsRepository : ITgsRepository
 				(
 				    SELECT
 				        player_code,
-				        max(report_date) OVER w AS "report_date",
+				        report_date,
 				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
 				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
 				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
@@ -793,7 +793,7 @@ internal class TgsRepository : ITgsRepository
 				(
 				    SELECT
 				        player_code,
-				        max(report_date) OVER w AS "report_date",
+				        report_date,
 				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
 				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
 				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
@@ -848,5 +848,93 @@ internal class TgsRepository : ITgsRepository
 		updateOverview.RecordedBy = playerLastestRow.ReportDate;
 
 		_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+	}
+
+	public async ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default)
+	{
+		var updateStatistics = _tgsContext.PlayerPaymentOverviews
+			.FromSqlInterpolated($"""
+				WITH CTE (
+				    player_code,
+				    report_date,
+				    max_report_date,
+				    total_deposit_amount,
+				    total_withdraw_amount,
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    first_deposit_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    first_withdraw_on
+				) AS
+				(
+				    SELECT
+				        player_code,
+				        report_date,
+				        max(report_date) OVER w AS "max_report_date",
+				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
+				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
+				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
+				        min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
+				        min(first_deposit_on) OVER w AS "first_deposit_on",
+				        min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
+				        min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
+				        min(first_withdraw_on) OVER w AS "first_withdraw_on"
+				    FROM
+				        dbo.player_daily_payment_statistics
+				    WINDOW w AS (PARTITION BY  player_code)
+				)
+				SELECT
+				    player_code,
+				    report_date,
+				    COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
+				    COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    first_deposit_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    first_withdraw_on,
+				    report_date AS "recorded_by"
+				FROM
+				    CTE
+				WHERE
+				    report_date = max_report_date
+				""");
+
+		var query = await (from s in updateStatistics
+						   join row in _tgsContext.PlayerPaymentOverviews
+							   on s.PlayerCode equals row.PlayerCode
+							   into g
+						   from row in g.DefaultIfEmpty()
+						   select new
+						   {
+							   Statistics = s,
+							   Exists = row
+						   })
+						   .ToArrayAsync(cancellationToken: cancellationToken)
+						   .ConfigureAwait(false);
+
+		foreach (var updateInfo in query)
+		{
+			if (updateInfo.Exists is null)
+				_ = await _tgsContext.PlayerPaymentOverviews
+					.AddAsync(updateInfo.Statistics, cancellationToken)
+					.ConfigureAwait(false);
+			else
+			{
+				updateInfo.Exists.TotalDepositAmount = updateInfo.Statistics.TotalDepositAmount;
+				updateInfo.Exists.TotalWithdrawAmount = updateInfo.Statistics.TotalWithdrawAmount;
+				updateInfo.Exists.FirstDepositAmount = updateInfo.Statistics.FirstDepositAmount;
+				updateInfo.Exists.FirstDepositHandlingFee = updateInfo.Statistics.FirstDepositHandlingFee;
+				updateInfo.Exists.FirstDepositOn = updateInfo.Statistics.FirstDepositOn;
+				updateInfo.Exists.FirstWithdrawAmount = updateInfo.Statistics.FirstWithdrawAmount;
+				updateInfo.Exists.FirstWithdrawHandlingFee = updateInfo.Statistics.FirstWithdrawHandlingFee;
+				updateInfo.Exists.FirstWithdrawOn = updateInfo.Statistics.FirstWithdrawOn;
+				updateInfo.Exists.RecordedBy = updateInfo.Statistics.RecordedBy;
+			}
+
+			_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+		}
 	}
 }
