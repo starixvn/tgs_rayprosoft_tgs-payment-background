@@ -23,4 +23,6 @@ public interface ITgsRepository
 	ValueTask UpdatePlayerPaymentOverviewAsync(DateOnly processDate, CancellationToken cancellationToken = default);
 
 	ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default);
+
+	ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default);
 }
