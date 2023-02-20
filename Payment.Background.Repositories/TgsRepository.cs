@@ -98,7 +98,7 @@ internal class TgsRepository : ITgsRepository
 											updated_on >= {queryTimeRange.From}
 											AND
 											updated_on < {queryTimeRange.To}
-										WINDOW z AS (PARTITION BY player_code ORDER BY updated_on ASC)
+										WINDOW w AS (PARTITION BY player_code ORDER BY updated_on ASC)
 									) AS T
 								GROUP BY
 									player_code,
