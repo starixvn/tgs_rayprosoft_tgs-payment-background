@@ -35,196 +35,196 @@ internal class TgsRepository : ITgsRepository
 
 			var processData = await _tgsContext.PlayerDailyPaymentStatistics
 				.FromSqlInterpolated($"""
-				SELECT
-					COALESCE(D.player_code, W.player_code) AS player_code,
-					COALESCE(D.date, W.date) AS report_date,
-					D.deposit_amount AS daily_deposit_amount,
-					D.deposit_handling_fee AS daily_deposit_handling_fee,
-					D.deposit_count AS daily_deposit_count,
-					D.daily_first_deposit_on AS first_deposit_on,
-					D.daily_first_deposit_amount AS first_deposit_amount,
-					D.daily_first_deposit_handling_fee AS first_deposit_handling_fee,
-					D.total_deposit_count,
-					D.total_deposit_amount,
-					D.total_deposit_handling_fee,
-					W.withdraw_amount AS daily_withdraw_amount,
-					W.withdraw_count AS daily_withdraw_count,
-					W.withdraw_handling_fee AS daily_withdraw_handling_fee,
-					W.total_withdraw_count,
-					W.total_withdraw_amount,
-					W.total_withdraw_handling_fee,
-					W.daily_first_withdraw_on AS first_withdraw_on,
-					W.daily_first_withdraw_amount AS first_withdraw_amount,
-					W.daily_first_withdraw_handling_fee AS first_withdraw_handling_fee
-				FROM
-					(
-						WITH depositStatistics
+					SELECT
+						COALESCE(D.player_code, W.player_code) AS player_code,
+						COALESCE(D.date, W.date) AS report_date,
+						D.deposit_amount AS daily_deposit_amount,
+						D.deposit_handling_fee AS daily_deposit_handling_fee,
+						D.deposit_count AS daily_deposit_count,
+						D.daily_first_deposit_on AS first_deposit_on,
+						D.daily_first_deposit_amount AS first_deposit_amount,
+						D.daily_first_deposit_handling_fee AS first_deposit_handling_fee,
+						D.total_deposit_count,
+						D.total_deposit_amount,
+						D.total_deposit_handling_fee,
+						W.withdraw_amount AS daily_withdraw_amount,
+						W.withdraw_count AS daily_withdraw_count,
+						W.withdraw_handling_fee AS daily_withdraw_handling_fee,
+						W.total_withdraw_count,
+						W.total_withdraw_amount,
+						W.total_withdraw_handling_fee,
+						W.daily_first_withdraw_on AS first_withdraw_on,
+						W.daily_first_withdraw_amount AS first_withdraw_amount,
+						W.daily_first_withdraw_handling_fee AS first_withdraw_handling_fee
+					FROM
 						(
-							player_code,
-							"date",
-							deposit_amount,
-							deposit_handling_fee,
-							daily_first_deposit_on,
-							daily_first_deposit_amount,
-							daily_first_deposit_handling_fee,
-							deposit_count
-						)
-						AS
-						(
-							SELECT
+							WITH depositStatistics
+							(
 								player_code,
-								date,
-								Sum(deposit_amount) AS deposit_amount,
-								Sum(handling_fee) AS deposit_handling_fee,
-								Min(daily_first_deposit_on) AS daily_first_deposit_on,
-								Min(daily_first_deposit_amount) AS daily_first_deposit_amount,
-								Min(daily_first_deposit_handling_fee) AS daily_first_deposit_handling_fee,
-								Count(1) AS deposit_count
-							FROM
-								(
-									SELECT
-										player_code,
-										(updated_on at time zone 'Asia/Shanghai')::date AS date,
-										COALESCE(actual_amount, amount) AS deposit_amount,
-										handling_fee AS handling_fee,
-										First_Value(updated_on) OVER w AS daily_first_deposit_on,
-										First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount,
-										First_Value(handling_fee) OVER w AS daily_first_deposit_handling_fee
-									FROM
-										dbo.deposit_forms
-									WHERE
-										status = 8000
-										AND
-										updated_on >= {queryTimeRange.From}
-										AND
-										updated_on < {queryTimeRange.To}
-									WINDOW w AS (PARTITION BY player_code ORDER BY updated_on ASC)
-								) AS T
-							GROUP BY
-								player_code,
-								"date"
-						)
-						SELECT
-							DS.player_code,
-							DS."date",
-							DS.deposit_amount,
-							DS.deposit_handling_fee,
-							DS.deposit_count,
-							COALESCE(TFD.first_deposit_on, DS.daily_first_deposit_on) AS daily_first_deposit_on,
-							COALESCE(TFD.first_deposit_amount, DS.daily_first_deposit_amount) AS daily_first_deposit_amount,
-							COALESCE(TFD.first_deposit_handling_fee, DS.daily_first_deposit_handling_fee) AS daily_first_deposit_handling_fee,
-							DS.deposit_count + COALESCE(TFD.total_deposit_count, 0) AS total_deposit_count,
-							DS.deposit_amount + COALESCE(TFD.total_deposit_amount, 0) AS total_deposit_amount,
-							DS.deposit_handling_fee + COALESCE(TFD.total_deposit_handling_fee, 0) AS total_deposit_handling_fee
-						FROM
-							depositStatistics AS DS
-							LEFT JOIN
+								"date",
+								deposit_amount,
+								deposit_handling_fee,
+								daily_first_deposit_on,
+								daily_first_deposit_amount,
+								daily_first_deposit_handling_fee,
+								deposit_count
+							)
+							AS
 							(
 								SELECT
-									PS.player_code,
-									Max(PS.report_date) AS report_date,
-									Max(PS.total_deposit_count) AS total_deposit_count,
-									Max(PS.total_deposit_amount) AS total_deposit_amount,
-									Max(PS.total_deposit_handling_fee) as total_deposit_handling_fee,
-									Min(PS.first_deposit_on) AS first_deposit_on,
-									Min(PS.first_deposit_amount) AS first_deposit_amount,
-									Min(PS.first_deposit_handling_fee) AS first_deposit_handling_fee
+									player_code,
+									date,
+									Sum(deposit_amount) AS deposit_amount,
+									Sum(handling_fee) AS deposit_handling_fee,
+									Min(daily_first_deposit_on) AS daily_first_deposit_on,
+									Min(daily_first_deposit_amount) AS daily_first_deposit_amount,
+									Min(daily_first_deposit_handling_fee) AS daily_first_deposit_handling_fee,
+									Count(1) AS deposit_count
 								FROM
-									dbo.player_daily_payment_statistics AS PS
-									JOIN
-									depositStatistics AS DS1 ON PS.player_code = DS1.player_code
-								WHERE
-									PS.report_date < {From}
+									(
+										SELECT
+											player_code,
+											(updated_on at time zone 'Asia/Shanghai')::date AS date,
+											COALESCE(actual_amount, amount) AS deposit_amount,
+											handling_fee AS handling_fee,
+											First_Value(updated_on) OVER w AS daily_first_deposit_on,
+											First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_deposit_amount,
+											First_Value(handling_fee) OVER w AS daily_first_deposit_handling_fee
+										FROM
+											dbo.deposit_forms
+										WHERE
+											status = 8000
+											AND
+											updated_on >= {queryTimeRange.From}
+											AND
+											updated_on < {queryTimeRange.To}
+										WINDOW z AS (PARTITION BY player_code ORDER BY updated_on ASC)
+									) AS T
 								GROUP BY
-									PS.player_code
-							) AS TFD ON DS.player_code = TFD.player_code
-					) AS D
-					FULL OUTER JOIN
-					(
-						WITH withdrawStatistics
-						(
-							player_code,
-							"date",
-							withdraw_amount,
-							withdraw_handling_fee,
-				            daily_first_withdraw_on,
-							daily_first_withdraw_amount,
-							daily_first_withdraw_handling_fee,
-							withdraw_count
-						)
-						AS
-						(
+									player_code,
+									"date"
+							)
 							SELECT
-								user_id,
-								(paid_on at time zone 'Asia/Shanghai')::date AS date,
-								Sum(withdraw_amount) AS withdraw_amount,
-								Sum(handling_fee) AS withdraw_handling_fee,
-				                Min(daily_first_withdraw_on) AS daily_first_withdraw_on,
-				                Min(daily_first_withdraw_amount) AS daily_first_withdraw_amount,
-				                Min(daily_first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee,
-								Count(1) AS withdraw_count
+								DS.player_code,
+								DS."date",
+								DS.deposit_amount,
+								DS.deposit_handling_fee,
+								DS.deposit_count,
+								COALESCE(TFD.first_deposit_on, DS.daily_first_deposit_on) AS daily_first_deposit_on,
+								COALESCE(TFD.first_deposit_amount, DS.daily_first_deposit_amount) AS daily_first_deposit_amount,
+								COALESCE(TFD.first_deposit_handling_fee, DS.daily_first_deposit_handling_fee) AS daily_first_deposit_handling_fee,
+								DS.deposit_count + COALESCE(TFD.total_deposit_count, 0) AS total_deposit_count,
+								DS.deposit_amount + COALESCE(TFD.total_deposit_amount, 0) AS total_deposit_amount,
+								DS.deposit_handling_fee + COALESCE(TFD.total_deposit_handling_fee, 0) AS total_deposit_handling_fee
 							FROM
+								depositStatistics AS DS
+								LEFT JOIN
 								(
 									SELECT
-										user_id,
-										paid_on,
-										COALESCE(actual_amount, amount) AS withdraw_amount,
-										handling_fee,
-										First_Value(paid_on) OVER w AS daily_first_withdraw_on,
-				                        First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_withdraw_amount,
-				                        First_Value(handling_fee) OVER w AS daily_first_withdraw_handling_fee
+										PS.player_code,
+										Max(PS.report_date) AS report_date,
+										Max(PS.total_deposit_count) AS total_deposit_count,
+										Max(PS.total_deposit_amount) AS total_deposit_amount,
+										Max(PS.total_deposit_handling_fee) as total_deposit_handling_fee,
+										Min(PS.first_deposit_on) AS first_deposit_on,
+										Min(PS.first_deposit_amount) AS first_deposit_amount,
+										Min(PS.first_deposit_handling_fee) AS first_deposit_handling_fee
 									FROM
-										dbo.withdraw_forms
+										dbo.player_daily_payment_statistics AS PS
+										JOIN
+										depositStatistics AS DS1 ON PS.player_code = DS1.player_code
 									WHERE
-				                        status = 9000
-				                        AND
-				                        user_type = 1
-				                        AND
-				                        paid_on >= {queryTimeRange.From}
-				                        AND
-				                        paid_on < {queryTimeRange.To}
-									WINDOW w AS (PARTITION BY user_id ORDER BY paid_on ASC)
-				                ) AS T
-							GROUP BY
-								user_id,
-								date
-						)
-						SELECT
-							WS.player_code,
-							WS."date",
-							WS.withdraw_amount,
-							WS.withdraw_count,
-							WS.withdraw_handling_fee,
-							WS.withdraw_count + COALESCE(TFW.total_withdraw_count, 0) AS total_withdraw_count,
-							WS.withdraw_amount + COALESCE(TFw.total_withdraw_amount, 0) AS total_withdraw_amount,
-							WS.withdraw_handling_fee + COALESCE(TFW.total_withdraw_handling_fee, 0) AS total_withdraw_handling_fee,
-							COALESCE(TFW.first_withdraw_on, WS.daily_first_withdraw_on) AS daily_first_withdraw_on,
-							COALESCE(TFW.first_withdraw_amount, WS.daily_first_withdraw_amount) AS daily_first_withdraw_amount,
-							COALESCE(TFW.first_withdraw_handling_fee, WS.daily_first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee
-						FROM
-							withdrawStatistics AS WS
-							LEFT JOIN
+										PS.report_date < {From}
+									GROUP BY
+										PS.player_code
+								) AS TFD ON DS.player_code = TFD.player_code
+						) AS D
+						FULL OUTER JOIN
+						(
+							WITH withdrawStatistics
+							(
+								player_code,
+								"date",
+								withdraw_amount,
+								withdraw_handling_fee,
+								daily_first_withdraw_on,
+								daily_first_withdraw_amount,
+								daily_first_withdraw_handling_fee,
+								withdraw_count
+							)
+							AS
 							(
 								SELECT
-									PS.player_code,
-									Max(PS.total_withdraw_count) AS total_withdraw_count,
-									Max(PS.total_withdraw_amount) AS total_withdraw_amount,
-									Max(PS.total_withdraw_handling_fee) AS total_withdraw_handling_fee,
-									Min(PS.first_withdraw_on) AS first_withdraw_on,
-									Min(PS.first_withdraw_amount) AS first_withdraw_amount,
-									Min(PS.first_withdraw_handling_fee) AS first_withdraw_handling_fee
+									user_id,
+									(paid_on at time zone 'Asia/Shanghai')::date AS date,
+									Sum(withdraw_amount) AS withdraw_amount,
+									Sum(handling_fee) AS withdraw_handling_fee,
+									Min(daily_first_withdraw_on) AS daily_first_withdraw_on,
+									Min(daily_first_withdraw_amount) AS daily_first_withdraw_amount,
+									Min(daily_first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee,
+									Count(1) AS withdraw_count
 								FROM
-									dbo.player_daily_payment_statistics AS PS
-									JOIN
-									withdrawStatistics AS WS1 ON PS.player_code = WS1.player_code
-								WHERE
-									PS.report_date < {From}
+									(
+										SELECT
+											user_id,
+											paid_on,
+											COALESCE(actual_amount, amount) AS withdraw_amount,
+											handling_fee,
+											First_Value(paid_on) OVER w AS daily_first_withdraw_on,
+											First_Value(COALESCE(actual_amount, amount)) OVER w AS daily_first_withdraw_amount,
+											First_Value(handling_fee) OVER w AS daily_first_withdraw_handling_fee
+										FROM
+											dbo.withdraw_forms
+										WHERE
+											status = 9000
+											AND
+											user_type = 1
+											AND
+											paid_on >= {queryTimeRange.From}
+											AND
+											paid_on < {queryTimeRange.To}
+										WINDOW w AS (PARTITION BY user_id ORDER BY paid_on ASC)
+									) AS T
 								GROUP BY
-									PS.player_code
-							) AS TFW ON WS.player_code = TFW.player_code
-					) AS W ON D.player_code = W.player_code
-						AND D.date = W.date
-				""")
+									user_id,
+									date
+							)
+							SELECT
+								WS.player_code,
+								WS."date",
+								WS.withdraw_amount,
+								WS.withdraw_count,
+								WS.withdraw_handling_fee,
+								WS.withdraw_count + COALESCE(TFW.total_withdraw_count, 0) AS total_withdraw_count,
+								WS.withdraw_amount + COALESCE(TFw.total_withdraw_amount, 0) AS total_withdraw_amount,
+								WS.withdraw_handling_fee + COALESCE(TFW.total_withdraw_handling_fee, 0) AS total_withdraw_handling_fee,
+								COALESCE(TFW.first_withdraw_on, WS.daily_first_withdraw_on) AS daily_first_withdraw_on,
+								COALESCE(TFW.first_withdraw_amount, WS.daily_first_withdraw_amount) AS daily_first_withdraw_amount,
+								COALESCE(TFW.first_withdraw_handling_fee, WS.daily_first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee
+							FROM
+								withdrawStatistics AS WS
+								LEFT JOIN
+								(
+									SELECT
+										PS.player_code,
+										Max(PS.total_withdraw_count) AS total_withdraw_count,
+										Max(PS.total_withdraw_amount) AS total_withdraw_amount,
+										Max(PS.total_withdraw_handling_fee) AS total_withdraw_handling_fee,
+										Min(PS.first_withdraw_on) AS first_withdraw_on,
+										Min(PS.first_withdraw_amount) AS first_withdraw_amount,
+										Min(PS.first_withdraw_handling_fee) AS first_withdraw_handling_fee
+									FROM
+										dbo.player_daily_payment_statistics AS PS
+										JOIN
+										withdrawStatistics AS WS1 ON PS.player_code = WS1.player_code
+									WHERE
+										PS.report_date < {From}
+									GROUP BY
+										PS.player_code
+								) AS TFW ON WS.player_code = TFW.player_code
+						) AS W ON D.player_code = W.player_code
+							AND D.date = W.date
+					""")
 				.AsNoTracking()
 				.ToArrayAsync(cancellationToken: cancellationToken)
 				.ConfigureAwait(false);
@@ -678,32 +678,86 @@ internal class TgsRepository : ITgsRepository
 	{
 		var reportDate = processDate.AddDays(-1);
 
-		var updateStatistics = await _tgsContext.PlayerDailyPaymentStatistics
-			.Where(row => row.ReportDate == reportDate)
-			.ToArrayAsync(cancellationToken: cancellationToken)
-			.ConfigureAwait(false);
+		var updateStatistics = _tgsContext.PlayerPaymentOverviews
+			.FromSqlInterpolated($"""
+				WITH CTE (
+				    player_code,
+				    report_date,
+				    total_deposit_amount,
+				    total_withdraw_amount,
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    first_deposit_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    first_withdraw_on
+				) AS
+				(
+				    SELECT
+				        player_code,
+				        max(report_date) OVER w AS "report_date",
+				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
+				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
+				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
+				        min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
+				        min(first_deposit_on) OVER w AS "first_deposit_on",
+				        min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
+				        min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
+				        min(first_withdraw_on) OVER w AS "first_withdraw_on"
+				    FROM
+				        dbo.player_daily_payment_statistics
+				    WHERE
+				        report_date <= {reportDate}
+				    WINDOW w AS (PARTITION BY  player_code ORDER BY report_date)
+				)
+				SELECT
+				    player_code,
+				    COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
+				    COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    first_deposit_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    first_withdraw_on,
+				    report_date AS "recorded_by"
+				FROM
+				    CTE
+				WHERE
+				    report_date = {reportDate}
+				""");
 
-		foreach (var row in updateStatistics)
+		var query = await (from s in updateStatistics
+						   join row in _tgsContext.PlayerPaymentOverviews
+							   on s.PlayerCode equals row.PlayerCode
+							   into g
+						   from row in g.DefaultIfEmpty()
+						   select new
+						   {
+							   Statistics = s,
+							   Exists = row
+						   })
+						   .ToArrayAsync(cancellationToken: cancellationToken)
+						   .ConfigureAwait(false);
+
+		foreach (var updateInfo in query)
 		{
-			var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
-				new object?[] { row.PlayerCode },
-				cancellationToken: cancellationToken).ConfigureAwait(false)
-				?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
-					new PlayerPaymentOverview
-					{
-						PlayerCode = row.PlayerCode
-					},
-					cancellationToken).ConfigureAwait(false)).Entity;
-
-			updateOverview.TotalDepositAmount = row.TotalDepositAmount ?? 0M;
-			updateOverview.TotalWithdrawAmount = row.TotalWithdrawAmount ?? 0M;
-			updateOverview.FirstDepositAmount = row.FirstDepositAmount;
-			updateOverview.FirstDepositHandlingFee = row.FirstDepositHandlingFee;
-			updateOverview.FirstDepositOn = row.FirstDepositOn;
-			updateOverview.FirstWithdrawAmount = row.FirstWithdrawAmount;
-			updateOverview.FirstWithdrawHandlingFee = row.FirstWithdrawHandlingFee;
-			updateOverview.FirstWithdrawOn = row.FirstWithdrawOn;
-			updateOverview.RecordedBy = row.ReportDate;
+			if (updateInfo.Exists is null)
+				_ = await _tgsContext.PlayerPaymentOverviews
+					.AddAsync(updateInfo.Statistics, cancellationToken)
+					.ConfigureAwait(false);
+			else
+			{
+				updateInfo.Exists.TotalDepositAmount = updateInfo.Statistics.TotalDepositAmount;
+				updateInfo.Exists.TotalWithdrawAmount = updateInfo.Statistics.TotalWithdrawAmount;
+				updateInfo.Exists.FirstDepositAmount = updateInfo.Statistics.FirstDepositAmount;
+				updateInfo.Exists.FirstDepositHandlingFee = updateInfo.Statistics.FirstDepositHandlingFee;
+				updateInfo.Exists.FirstDepositOn = updateInfo.Statistics.FirstDepositOn;
+				updateInfo.Exists.FirstWithdrawAmount = updateInfo.Statistics.FirstWithdrawAmount;
+				updateInfo.Exists.FirstWithdrawHandlingFee = updateInfo.Statistics.FirstWithdrawHandlingFee;
+				updateInfo.Exists.FirstWithdrawOn = updateInfo.Statistics.FirstWithdrawOn;
+				updateInfo.Exists.RecordedBy = updateInfo.Statistics.RecordedBy;
+			}
 
 			_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 		}
@@ -720,8 +774,61 @@ internal class TgsRepository : ITgsRepository
 		if (playerLastestRow is null)
 			return;
 
+		var reportDate = playerLastestRow.ReportDate;
+
+		var updateStatistics = await _tgsContext.PlayerPaymentOverviews
+			.FromSqlInterpolated($"""
+				WITH CTE (
+				    player_code,
+				    report_date,
+				    total_deposit_amount,
+				    total_withdraw_amount,
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    first_deposit_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    first_withdraw_on
+				) AS
+				(
+				    SELECT
+				        player_code,
+				        max(report_date) OVER w AS "report_date",
+				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
+				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
+				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
+				        min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
+				        min(first_deposit_on) OVER w AS "first_deposit_on",
+				        min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
+				        min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
+				        min(first_withdraw_on) OVER w AS "first_withdraw_on"
+				    FROM
+				        dbo.player_daily_payment_statistics
+				    WHERE
+				        player_code = {playerCode}
+				    WINDOW w AS (PARTITION BY  player_code ORDER BY report_date)
+				)
+				SELECT
+				    player_code,
+				    COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
+				    COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    first_deposit_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    first_withdraw_on,
+				    report_date AS "recorded_by"
+				FROM
+				    CTE
+				WHERE
+				    report_date = {reportDate}
+				""")
+			.FirstAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
 		var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
-				new object?[] { playerLastestRow.PlayerCode },
+				new object?[] { updateStatistics.PlayerCode },
 				cancellationToken: cancellationToken).ConfigureAwait(false)
 				?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
 					new PlayerPaymentOverview
