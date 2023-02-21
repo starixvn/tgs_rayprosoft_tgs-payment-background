@@ -162,7 +162,7 @@ public class PaymentBookkeeperTests
 			{
 				lock (queue)
 				{
-					Thread.Sleep(100);
+					Thread.Sleep(500);
 
 					queue.Dequeue().SetResult();
 				}
