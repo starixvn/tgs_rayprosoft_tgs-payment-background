@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using Tgs.Payment.Background.Repositories.Entities;
 
 namespace Tgs.Payment.Background.Repositories;
@@ -10,10 +11,12 @@ internal class TgsRepository : ITgsRepository
 	private const string BrandDailyPaymentKey = "BrandDailyPayment";
 
 	private readonly TgsContext _tgsContext;
+	private readonly ILogger<TgsRepository> _logger;
 
-	public TgsRepository(TgsContext tgsContext)
+	public TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logger)
 	{
 		_tgsContext = tgsContext ?? throw new ArgumentNullException(nameof(tgsContext));
+		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 	}
 
 	public IAsyncEnumerable<string> ProcessPlayerDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
@@ -675,6 +678,8 @@ internal class TgsRepository : ITgsRepository
 
 	public async ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default)
 	{
+		_logger.LogDebug("UpdatePlayerPaymentOverview {playerCode}", playerCode);
+
 		var playerLastestRow = await _tgsContext.PlayerDailyPaymentStatistics
 			.Where(row => row.PlayerCode == playerCode)
 			.OrderByDescending(row => row.ReportDate)
@@ -682,7 +687,10 @@ internal class TgsRepository : ITgsRepository
 			.ConfigureAwait(false);
 
 		if (playerLastestRow is null)
+		{
+			_logger.LogWarning("Player ({playerCode}) has not found statistics data.", playerCode);
 			return;
+		}
 
 		var reportDate = playerLastestRow.ReportDate;
 
@@ -739,11 +747,11 @@ internal class TgsRepository : ITgsRepository
 			.ConfigureAwait(false);
 
 		var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
-				new object?[] { updateStatistics.PlayerCode },
-				cancellationToken: cancellationToken).ConfigureAwait(false)
-				?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
-					updateStatistics,
-					cancellationToken).ConfigureAwait(false)).Entity;
+			new object?[] { updateStatistics.PlayerCode },
+			cancellationToken: cancellationToken).ConfigureAwait(false)
+			?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
+				updateStatistics,
+				cancellationToken).ConfigureAwait(false)).Entity;
 
 		updateOverview.TotalDepositAmount = updateStatistics.TotalDepositAmount;
 		updateOverview.TotalWithdrawAmount = updateStatistics.TotalWithdrawAmount;
