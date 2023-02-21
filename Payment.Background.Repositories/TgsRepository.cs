@@ -285,9 +285,8 @@ internal class TgsRepository : ITgsRepository
 				.SaveChangesAsync(cancellationToken)
 				.ConfigureAwait(false);
 
-			return leftJoin
-				.Select(p => p.Input.PlayerCode)
-				.Concat(rightJoin.Select(p => p.PlayerCode))
+			return processData
+				.Select(p => p.PlayerCode)
 				.Distinct()
 				.ToArray();
 		}
