@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 
 namespace Tgs.Payment.Background.IntegrationTests;
@@ -55,18 +56,83 @@ public class PaymentBookkeeperTests
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode1),
 				Arg.Any<CancellationToken>()))
-			.Do(_ => tcs1.SetResult());
+			.Do(_ =>
+			{
+				Thread.Sleep(100);
+				tcs1.SetResult();
+			});
 		fakeTgsRepository
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode2),
 				Arg.Any<CancellationToken>()))
-			.Do(_ => tcs2.SetResult());
+			.Do(_ =>
+			{
+				Thread.Sleep(100);
+				tcs2.SetResult();
+			});
 
 		sut.Post(playerCode1);
 		sut.Post(playerCode2);
 
 		await tcs1.Task.WaitAsync(TimeSpan.FromSeconds(1D));
 		await tcs2.Task.WaitAsync(TimeSpan.FromSeconds(1D));
+	}
+
+	[TestMethod]
+	public async Task PaymentBookkeeper收到三個玩家金流總覽更新要求就會執行三次更新()
+	{
+		var fakeTgsRepository = Substitute.For<ITgsRepository>();
+
+		await using var web = TestPaymentBackgroundApplication.Instance
+			.WithWebHostBuilder(hostBuilder => hostBuilder
+				.ConfigureServices(services => services
+					.AddSingleton(fakeTgsRepository)));
+
+		var sut = web.Services.GetRequiredService<IPaymentOverviewUpdateSender>();
+
+		var playerCode1 = "test1";
+		var playerCode2 = "test2";
+		var playerCode3 = "test3";
+
+		var tcs1 = new TaskCompletionSource();
+		var tcs2 = new TaskCompletionSource();
+		var tcs3 = new TaskCompletionSource();
+
+		fakeTgsRepository
+			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
+				Arg.Is(playerCode1),
+				Arg.Any<CancellationToken>()))
+			.Do(_ =>
+			{
+				Thread.Sleep(100);
+				tcs1.SetResult();
+			});
+		fakeTgsRepository
+			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
+				Arg.Is(playerCode2),
+				Arg.Any<CancellationToken>()))
+			.Do(_ =>
+			{
+				Thread.Sleep(100);
+				tcs2.SetResult();
+			});
+		fakeTgsRepository
+			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
+				Arg.Is(playerCode3),
+				Arg.Any<CancellationToken>()))
+			.Do(_ =>
+			{
+				Thread.Sleep(100);
+				tcs3.SetResult();
+			});
+
+		sut.Post(playerCode1);
+		sut.Post(playerCode2);
+		sut.Post(playerCode3);
+
+		await tcs1.Task.WaitAsync(TimeSpan.FromSeconds(1D));
+		await tcs2.Task.WaitAsync(TimeSpan.FromSeconds(1D));
+		await tcs3.Task.WaitAsync(TimeSpan.FromSeconds(1D));
 	}
 
 	[TestMethod]

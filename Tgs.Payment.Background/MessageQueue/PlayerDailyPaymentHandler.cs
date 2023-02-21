@@ -43,10 +43,13 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
 
-			_logger.LogDebug("Change players is {changePlayers}", string.Join(", ", changePlayers));
+			_logger.LogDebug("1. Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 			foreach (var playerCode in changePlayers)
+			{
+				_logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
 				_paymentOverviewUpdateSender.Post(playerCode);
+			}
 		}
 		else if (requestDate > lastProcessDate)
 		{
@@ -62,10 +65,13 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
 
-				_logger.LogDebug("Change players is {changePlayers}", string.Join(", ", changePlayers));
+				_logger.LogDebug("2. Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 				foreach (var playerCode in changePlayers)
+				{
+					_logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
 					_paymentOverviewUpdateSender.Post(playerCode);
+				}
 			}
 
 			await _tgsRepository
@@ -86,10 +92,13 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
 
-				_logger.LogDebug("Change players is {changePlayers}", string.Join(", ", changePlayers));
+				_logger.LogDebug("3. Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 				foreach (var playerCode in changePlayers)
+				{
+					_logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
 					_paymentOverviewUpdateSender.Post(playerCode);
+				}
 			}
 		}
 	}
