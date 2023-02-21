@@ -37,6 +37,7 @@
 		<PackageReference Include="PhoenixToolkits.Protobuf.ExtendTypes" Version="0.0.6" />
 		<PackageReference Include="ProfileViewer.OpenTelemetry.Exporter" Version="0.2.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+		<PackageReference Include="Tgs.MessageQueue.InProcess" Version="0.0.14" />
 		<PackageReference Include="Tgs.MessageQueue.Nats" Version="2.1.7" />
 		<PackageReference Include="Tgs.WebApi.Toolkits" Version="0.1.1" />
 	</ItemGroup>
