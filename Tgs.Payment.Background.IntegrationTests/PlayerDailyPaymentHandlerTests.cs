@@ -1,4 +1,5 @@
 ﻿using Google.Protobuf;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using Tgs.Payment.Background.MessageQueue;
 using Tgs.Payment.Background.Protos;
@@ -14,7 +15,10 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(
+			fakeTgsRepository,
+			fakePaymentOverviewUpdateSender,
+			NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -37,7 +41,7 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender, NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -58,7 +62,10 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(
+			fakeTgsRepository,
+			fakePaymentOverviewUpdateSender,
+			NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -85,7 +92,10 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(
+			fakeTgsRepository,
+			fakePaymentOverviewUpdateSender,
+			NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -109,7 +119,10 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(
+			fakeTgsRepository,
+			fakePaymentOverviewUpdateSender,
+			NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -145,7 +158,10 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(
+			fakeTgsRepository,
+			fakePaymentOverviewUpdateSender,
+			NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -175,7 +191,7 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender, NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{
@@ -215,7 +231,7 @@ public class PlayerDailyPaymentHandlerTests
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
 		var fakePaymentOverviewUpdateSender = Substitute.For<IPaymentOverviewUpdateSender>();
 
-		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender);
+		var sut = new PlayerDailyPaymentHandler(fakeTgsRepository, fakePaymentOverviewUpdateSender, NullLogger<PlayerDailyPaymentHandler>.Instance);
 
 		var request = new ProcessRequest
 		{

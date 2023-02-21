@@ -7,13 +7,16 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 {
 	private readonly ITgsRepository _tgsRepository;
 	private readonly IPaymentOverviewUpdateSender _paymentOverviewUpdateSender;
+	private readonly ILogger<PlayerDailyPaymentHandler> _logger;
 
 	public PlayerDailyPaymentHandler(
 		ITgsRepository tgsRepository,
-		IPaymentOverviewUpdateSender paymentOverviewUpdateSender)
+		IPaymentOverviewUpdateSender paymentOverviewUpdateSender,
+		ILogger<PlayerDailyPaymentHandler> logger)
 	{
 		_tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
 		_paymentOverviewUpdateSender = paymentOverviewUpdateSender ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateSender));
+		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
 	}
 
 	public async ValueTask HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
@@ -40,6 +43,8 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
 
+			_logger.LogDebug("Change players is {changePlayers}", changePlayers);
+
 			foreach (var playerCode in changePlayers)
 				_paymentOverviewUpdateSender.Post(playerCode);
 		}
@@ -56,6 +61,8 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 						cancellationToken)
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
+
+				_logger.LogDebug("Change players is {changePlayers}", changePlayers);
 
 				foreach (var playerCode in changePlayers)
 					_paymentOverviewUpdateSender.Post(playerCode);
@@ -78,6 +85,8 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 						cancellationToken)
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
+
+				_logger.LogDebug("Change players is {changePlayers}", changePlayers);
 
 				foreach (var playerCode in changePlayers)
 					_paymentOverviewUpdateSender.Post(playerCode);
