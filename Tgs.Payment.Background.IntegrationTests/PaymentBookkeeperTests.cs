@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using Microsoft.VisualStudio.TestTools.UnitTesting;
 using NSubstitute;
 
 namespace Tgs.Payment.Background.IntegrationTests;
@@ -160,16 +159,15 @@ public class PaymentBookkeeperTests
 				Arg.Any<CancellationToken>()))
 			.Do(_ =>
 			{
-				lock (queue)
-				{
-					Thread.Sleep(500);
+				Thread.Sleep(500);
 
-					queue.Dequeue().SetResult();
-				}
+				queue.Dequeue().SetResult();
 			});
 
 		for (var i = 0; i < 5; i++)
 			sut.Post(playerCode);
+		Thread.Sleep(50);
+		sut.Post(playerCode);
 
 		await tcs1.Task.WaitAsync(TimeSpan.FromSeconds(1D));
 		await tcs2.Task.WaitAsync(TimeSpan.FromSeconds(1D));
