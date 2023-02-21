@@ -43,7 +43,7 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
 
-			_logger.LogDebug("Change players is {changePlayers}", changePlayers);
+			_logger.LogDebug("Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 			foreach (var playerCode in changePlayers)
 				_paymentOverviewUpdateSender.Post(playerCode);
@@ -62,7 +62,7 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
 
-				_logger.LogDebug("Change players is {changePlayers}", changePlayers);
+				_logger.LogDebug("Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 				foreach (var playerCode in changePlayers)
 					_paymentOverviewUpdateSender.Post(playerCode);
@@ -86,7 +86,7 @@ public class PlayerDailyPaymentHandler : IMessageHandler
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
 
-				_logger.LogDebug("Change players is {changePlayers}", changePlayers);
+				_logger.LogDebug("Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 				foreach (var playerCode in changePlayers)
 					_paymentOverviewUpdateSender.Post(playerCode);
