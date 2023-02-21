@@ -160,7 +160,7 @@ public class PaymentBookkeeperTests
 				Arg.Any<CancellationToken>()))
 			.Do(_ =>
 			{
-				Thread.Sleep(300);
+				Thread.Sleep(100);
 
 				queue.Dequeue().SetResult();
 			});

@@ -48,7 +48,7 @@ deploy-dev:
       artifacts: true
   only:
     - main
-  when: always
+  when: on_success
   script:
     - !reference [.deploy-template, script]
     - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
