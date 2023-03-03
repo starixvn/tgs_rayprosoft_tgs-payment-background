@@ -51,7 +51,7 @@ builder.Services
 		.AddReplyHandler<PlayerDailyPaymentHandler>("tgs.payment.background.player", "tgs.payment.background.player")
 		.AddReplyHandler<AgentDailyPaymentHandler>("tgs.payment.background.agent", "tgs.payment.background.agent")
 		.AddReplyHandler<BrandDailyPaymentHandler>("tgs.payment.background.brand", "tgs.payment.background.brand")
-		.AddReplyHandler<RefreshAllPlayerPaymentOverviewHandler>(
+		.AddHandler<RefreshAllPlayerPaymentOverviewHandler>(
 			"tgs.payment.background.payment-overview.all",
 			"tgs.payment.background.payment-overview.all"))
 	.AddNatsGlobPatternExchange("*");
