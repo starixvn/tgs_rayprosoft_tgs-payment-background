@@ -835,12 +835,12 @@ internal class TgsRepository : ITgsRepository
 		foreach (var updateInfo in query)
 		{
 			if (updateInfo.Exists is null)
-				_ = await _tgsContext.PlayerPaymentOverviews
+				(await _tgsContext.PlayerPaymentOverviews
 					.AddAsync(updateInfo.Statistics, cancellationToken)
-					.ConfigureAwait(false);
+					.ConfigureAwait(false)).State = EntityState.Added;
 			else
 			{
-				_ = _tgsContext.PlayerPaymentOverviews.Attach(updateInfo.Exists);
+				_tgsContext.PlayerPaymentOverviews.Attach(updateInfo.Exists).State = EntityState.Modified;
 
 				updateInfo.Exists.TotalDepositAmount = updateInfo.Statistics.TotalDepositAmount;
 				updateInfo.Exists.TotalWithdrawAmount = updateInfo.Statistics.TotalWithdrawAmount;
