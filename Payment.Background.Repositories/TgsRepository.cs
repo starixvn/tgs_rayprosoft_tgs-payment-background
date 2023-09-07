@@ -644,7 +644,10 @@ internal class TgsRepository : ITgsRepository
 					Sum(CTE.daily_withdraw_handling_fee) as daily_withdraw_handling_fee,
 					COALESCE(Sum(CTE.is_first_deposit), 0) AS first_deposit_players,
 					COALESCE(Sum(CTE.un_second_deposit), 0) AS undeposit_again_players,
-					Count(CTE.is_first_deposit) AS deposit_players
+					Count(CTE.is_first_deposit) AS deposit_players,
+					null AS daily_deposit_approved_count,
+					null AS daily_deposit_reject_count,
+					null AS daily_deposit_total_count
 				FROM
 					CTE
 					JOIN
