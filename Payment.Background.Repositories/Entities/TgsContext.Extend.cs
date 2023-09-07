@@ -16,7 +16,6 @@ partial class TgsContext
 		var dailydepositSummary = modelBuilder.Entity<DailyBrandDepositStatusSummary>();
 		dailydepositSummary.HasNoKey();
 		dailydepositSummary.Property(d => d.BrandId).HasColumnName("brand_id");
-		dailydepositSummary.Property(d => d.ReportDate).HasColumnName("report_date");
 		dailydepositSummary.Property(d => d.Total).HasColumnName("total");
 		dailydepositSummary.Property(d => d.Approved).HasColumnName("approved");
 		dailydepositSummary.Property(d => d.Reject).HasColumnName("reject");

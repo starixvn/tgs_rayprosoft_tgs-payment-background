@@ -1,10 +1,8 @@
 ﻿namespace Tgs.Payment.Background.Repositories;
 
-public class DailyBrandDepositStatusSummary
+internal class DailyBrandDepositStatusSummary
 {
 	public Guid BrandId { get; set; }
-
-	public DateOnly ReportDate { get; set; }
 
 	public int Approved { get; set; }
 
