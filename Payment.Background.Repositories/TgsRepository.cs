@@ -552,6 +552,33 @@ internal class TgsRepository : ITgsRepository
 		var queryDate = processDate.AddDays(-1);
 		var undepositAgainCheckDate = processDate.AddDays(-3);
 
+		var depositStatistics = await _tgsContext.Set<DailyBrandDepositStatusSummary>()
+			.FromSqlInterpolated($@"
+				SELECT
+					brand_id,
+					Count(1) AS total,
+					Count(1) filter(WHERE status=8000) AS approved,
+					Count(1) filter(WHERE status=7000) AS reject
+				FROM
+					dbo.deposit_forms
+				WHERE
+					updated_on >= {queryDate}
+					AND
+					updated_on < {processDate}
+				GROUP BY
+					brand_id")
+			.AsNoTracking()
+			.ToDictionaryAsync(summary => summary.BrandId, cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		void AssignDepositStatisticsValues(BrandDailyPaymentStatistic row)
+		{
+			var depositStatisticsByKey = depositStatistics!.GetValueOrDefault(row.BrandId, null);
+			row.DailyDepositTotalCount = depositStatisticsByKey?.Total;
+			row.DailyDepositApprovedCount = depositStatisticsByKey?.Approved;
+			row.DailyDepositRejectCount = depositStatisticsByKey?.Reject;
+		}
+
 		var processData = await _tgsContext.BrandDailyPaymentStatistics
 			.FromSqlInterpolated($@"
 				WITH CTE(
@@ -625,7 +652,9 @@ internal class TgsRepository : ITgsRepository
 				GROUP BY
 					P.brand_id")
 			.AsNoTracking()
-			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ToAsyncEnumerable()
+			.Do(AssignDepositStatisticsValues)
+			.ToArrayAsync(cancellationToken)
 			.ConfigureAwait(false);
 
 		var existsData = await _tgsContext.BrandDailyPaymentStatistics
@@ -663,6 +692,9 @@ internal class TgsRepository : ITgsRepository
 				modifyRow.FirstDepositPlayers = p.Input.FirstDepositPlayers;
 				modifyRow.UndepositAgainPlayers = p.Input.UndepositAgainPlayers;
 				modifyRow.DepositPlayers = p.Input.DepositPlayers;
+				modifyRow.DailyDepositTotalCount = p.Input.DailyDepositTotalCount;
+				modifyRow.DailyDepositApprovedCount = p.Input.DailyDepositApprovedCount;
+				modifyRow.DailyDepositRejectCount = p.Input.DailyDepositRejectCount;
 			}
 			else
 				_ = await _tgsContext.BrandDailyPaymentStatistics
@@ -697,50 +729,50 @@ internal class TgsRepository : ITgsRepository
 		var updateStatistics = await _tgsContext.PlayerPaymentOverviews
 			.FromSqlInterpolated($"""
 				WITH CTE (
-				    player_code,
-				    report_date,
-				    total_deposit_amount,
-				    total_withdraw_amount,
-				    first_deposit_amount,
-				    first_deposit_handling_fee,
-				    first_deposit_on,
-				    first_withdraw_amount,
-				    first_withdraw_handling_fee,
-				    first_withdraw_on
+					player_code,
+					report_date,
+					total_deposit_amount,
+					total_withdraw_amount,
+					first_deposit_amount,
+					first_deposit_handling_fee,
+					first_deposit_on,
+					first_withdraw_amount,
+					first_withdraw_handling_fee,
+					first_withdraw_on
 				) AS
 				(
-				    SELECT
-				        player_code,
-				        report_date,
-				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
-				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
-				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
-				        min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
-				        min(first_deposit_on) OVER w AS "first_deposit_on",
-				        min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
-				        min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
-				        min(first_withdraw_on) OVER w AS "first_withdraw_on"
-				    FROM
-				        dbo.player_daily_payment_statistics
-				    WHERE
-				        player_code = {playerCode}
-				    WINDOW w AS (PARTITION BY  player_code ORDER BY report_date)
+					SELECT
+						player_code,
+						report_date,
+						max(total_deposit_amount) OVER w AS "total_deposit_amount",
+						max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
+						min(first_deposit_amount) OVER w AS "first_deposit_amount",
+						min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
+						min(first_deposit_on) OVER w AS "first_deposit_on",
+						min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
+						min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
+						min(first_withdraw_on) OVER w AS "first_withdraw_on"
+					FROM
+						dbo.player_daily_payment_statistics
+					WHERE
+						player_code = {playerCode}
+					WINDOW w AS (PARTITION BY  player_code ORDER BY report_date)
 				)
 				SELECT
-				    player_code,
-				    COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
-				    COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
-				    first_deposit_amount,
-				    first_deposit_handling_fee,
-				    first_deposit_on,
-				    first_withdraw_amount,
-				    first_withdraw_handling_fee,
-				    first_withdraw_on,
-				    report_date AS "recorded_by"
+					player_code,
+					COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
+					COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
+					first_deposit_amount,
+					first_deposit_handling_fee,
+					first_deposit_on,
+					first_withdraw_amount,
+					first_withdraw_handling_fee,
+					first_withdraw_on,
+					report_date AS "recorded_by"
 				FROM
-				    CTE
+					CTE
 				WHERE
-				    report_date = {reportDate}
+					report_date = {reportDate}
 				""")
 			.AsNoTracking()
 			.FirstAsync(cancellationToken: cancellationToken)
@@ -771,51 +803,51 @@ internal class TgsRepository : ITgsRepository
 		var updateStatistics = _tgsContext.PlayerPaymentOverviews
 			.FromSqlInterpolated($"""
 				WITH CTE (
-				    player_code,
-				    report_date,
-				    max_report_date,
-				    total_deposit_amount,
-				    total_withdraw_amount,
-				    first_deposit_amount,
-				    first_deposit_handling_fee,
-				    first_deposit_on,
-				    first_withdraw_amount,
-				    first_withdraw_handling_fee,
-				    first_withdraw_on
+					player_code,
+					report_date,
+					max_report_date,
+					total_deposit_amount,
+					total_withdraw_amount,
+					first_deposit_amount,
+					first_deposit_handling_fee,
+					first_deposit_on,
+					first_withdraw_amount,
+					first_withdraw_handling_fee,
+					first_withdraw_on
 				) AS
 				(
-				    SELECT
-				        player_code,
-				        report_date,
-				        max(report_date) OVER w AS "max_report_date",
-				        max(total_deposit_amount) OVER w AS "total_deposit_amount",
-				        max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
-				        min(first_deposit_amount) OVER w AS "first_deposit_amount",
-				        min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
-				        min(first_deposit_on) OVER w AS "first_deposit_on",
-				        min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
-				        min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
-				        min(first_withdraw_on) OVER w AS "first_withdraw_on"
-				    FROM
-				        dbo.player_daily_payment_statistics
-				    WINDOW w AS (PARTITION BY  player_code)
+					SELECT
+						player_code,
+						report_date,
+						max(report_date) OVER w AS "max_report_date",
+						max(total_deposit_amount) OVER w AS "total_deposit_amount",
+						max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
+						min(first_deposit_amount) OVER w AS "first_deposit_amount",
+						min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
+						min(first_deposit_on) OVER w AS "first_deposit_on",
+						min(first_withdraw_amount) OVER w AS "first_withdraw_amount",
+						min(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
+						min(first_withdraw_on) OVER w AS "first_withdraw_on"
+					FROM
+						dbo.player_daily_payment_statistics
+					WINDOW w AS (PARTITION BY  player_code)
 				)
 				SELECT
-				    player_code,
-				    report_date,
-				    COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
-				    COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
-				    first_deposit_amount,
-				    first_deposit_handling_fee,
-				    first_deposit_on,
-				    first_withdraw_amount,
-				    first_withdraw_handling_fee,
-				    first_withdraw_on,
-				    report_date AS "recorded_by"
+					player_code,
+					report_date,
+					COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
+					COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
+					first_deposit_amount,
+					first_deposit_handling_fee,
+					first_deposit_on,
+					first_withdraw_amount,
+					first_withdraw_handling_fee,
+					first_withdraw_on,
+					report_date AS "recorded_by"
 				FROM
-				    CTE
+					CTE
 				WHERE
-				    report_date = max_report_date
+					report_date = max_report_date
 				""")
 			.AsNoTracking();
 
