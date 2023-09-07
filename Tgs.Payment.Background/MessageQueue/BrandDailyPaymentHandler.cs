@@ -43,6 +43,11 @@ public class BrandDailyPaymentHandler : IMessageHandler
 			await _tgsRepository
 				.ProcessBrandDailyPaymentStatisticsAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
+
+			await _tgsRepository
+				.ProcessBrandDailyPaymentStatisticsDepositSummaryAsync(requestDate.Value, cancellationToken)
+				.ConfigureAwait(false);
+
 			await _tgsRepository
 				.SetBrandDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
@@ -53,11 +58,19 @@ public class BrandDailyPaymentHandler : IMessageHandler
 				- lastProcessDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
 
 			for (int i = 1; i < diffDays; i++)
+			{
 				await _tgsRepository
 					.ProcessBrandDailyPaymentStatisticsAsync(
 						lastProcessDate.Value.AddDays(i),
 						cancellationToken)
 					.ConfigureAwait(false);
+
+				await _tgsRepository
+					.ProcessBrandDailyPaymentStatisticsDepositSummaryAsync(
+						lastProcessDate.Value.AddDays(i),
+						cancellationToken)
+					.ConfigureAwait(false);
+			}
 
 			await _tgsRepository
 				.SetBrandDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
@@ -69,11 +82,19 @@ public class BrandDailyPaymentHandler : IMessageHandler
 				- requestDate.Value.ToDateTime(TimeOnly.MinValue)).TotalDays + 1;
 
 			for (int i = 0; i < diffDays; i++)
+			{
 				await _tgsRepository
 					.ProcessBrandDailyPaymentStatisticsAsync(
 						requestDate.Value.AddDays(i),
 						cancellationToken)
 					.ConfigureAwait(false);
+
+				await _tgsRepository
+					.ProcessBrandDailyPaymentStatisticsDepositSummaryAsync(
+						requestDate.Value.AddDays(i),
+						cancellationToken)
+					.ConfigureAwait(false);
+			}
 		}
 	}
 }

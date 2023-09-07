@@ -856,4 +856,60 @@ internal class TgsRepository : ITgsRepository
 			_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 		}
 	}
+
+	public  async ValueTask ProcessBrandDailyPaymentStatisticsDepositSummaryAsync(DateOnly processDate, CancellationToken cancellationToken = default)
+	{
+		var queryDate = processDate.AddDays(-1);
+
+		var processData = await _tgsContext.Set<DailyBrandDepositStatusSummary>()
+			.FromSqlInterpolated($@"
+				SELECT 
+					brand_id,
+ 					{queryDate} AS report_date,
+					Count(1) AS total,
+					Count(1) filter(WHERE status=8000) AS approved,
+					Count(1) filter(WHERE status=7000) AS reject
+				FROM dbo.deposit_forms 
+				WHERE 
+					{queryDate} <= created_on
+					AND 
+					created_on < {processDate}
+				GROUP BY brand_id")
+			.AsNoTracking()
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		var existsData = await _tgsContext.BrandDailyPaymentStatistics
+			.Where(row => row.ReportDate == queryDate)
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		var leftJoin = from db in existsData
+					   join input in processData
+							on new { db.BrandId, db.ReportDate }
+								equals new { input.BrandId, input.ReportDate } into g
+					   from input in g.DefaultIfEmpty()					   
+					   select new
+					   {
+						   Input = input,
+						   Db = db
+					   };
+
+		foreach (var p in leftJoin)
+			if (p.Db is not null)
+			{
+				var modifyRow = p.Db;
+				modifyRow.DailyDepositTotalCount = p.Input.Total;
+				modifyRow.DailyDepositApprovedCount = p.Input.Approved;
+				modifyRow.DailyDepositRejectCount = p.Input.Reject;				
+			}
+			else
+				_ = await _tgsContext.BrandDailyPaymentStatistics
+					.AddAsync(p.Db, cancellationToken)
+					.ConfigureAwait(false);
+
+		_ = await _tgsContext
+			.SaveChangesAsync(cancellationToken)
+			.ConfigureAwait(false);
+	}
 }

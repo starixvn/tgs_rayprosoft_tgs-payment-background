@@ -20,6 +20,8 @@ public interface ITgsRepository
 
 	ValueTask ProcessBrandDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default);
 
+	ValueTask ProcessBrandDailyPaymentStatisticsDepositSummaryAsync(DateOnly processDate, CancellationToken cancellationToken = default);
+
 	ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default);
 
 	ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default);

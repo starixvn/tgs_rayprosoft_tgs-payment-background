@@ -19,5 +19,5 @@ public class OverviewController : ControllerBase
 		string playerCode)
 		=> tgsRepository.UpdatePlayerPaymentOverviewAsync(
 			playerCode,
-			HttpContext.RequestAborted);
+			HttpContext.RequestAborted);	
 }
