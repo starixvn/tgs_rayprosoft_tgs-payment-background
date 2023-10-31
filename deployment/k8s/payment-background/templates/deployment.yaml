@@ -50,17 +50,10 @@ spec:
                 secretKeyRef:
                   name: tgs-connections
                   key: nats
-            - name: DOTNET_DiagnosticPorts
-              value: /diag/port
           ports:
             - name: http
               containerPort: 80
               protocol: TCP
-          volumeMounts:
-            - mountPath: /diag
-              name: diagvol
-            - mountPath: /dumps
-              name: dumpsvol
           livenessProbe:
             httpGet:
               path: /healthz
@@ -120,10 +113,6 @@ spec:
         - name: appsettings
           configMap:
             name: configmap-{{ include "payment-background.fullname" . }}
-        - name: diagvol
-          emptyDir: {}
-        - name: dumpsvol
-          emptyDir: {}
       {{- with .Values.nodeSelector }}
       nodeSelector:
         {{- toYaml . | nindent 8 }}
