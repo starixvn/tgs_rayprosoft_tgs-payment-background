@@ -30,9 +30,6 @@ push-docker-image:
 
 push-k8s-template:
   extends: .push-k8s-template
-  script:
-    - !reference [.push-k8s-template, script]
-    - cp deployment/k8s/cronjob.yaml artifacts/k8s/
 
 deploy-dev:
   extends: .deploy-template
@@ -50,8 +47,14 @@ deploy-dev:
     - main
   when: on_success
   script:
-    - !reference [.deploy-template, script]
-    - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
+    - |
+      cat << EOF | deploy_k8s $TgsSettingKey $HelmTemplateFolderName $namespace
+        {
+          "cronjob": {
+            "schedule": "0 21 * * *"
+          }
+        }
+      EOF
 
 deploy-staging:
   extends: .deploy-template
@@ -69,8 +72,14 @@ deploy-staging:
     - main
   when: manual
   script:
-    - !reference [.deploy-template, script]
-    - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
+    - |
+      cat << EOF | deploy_k8s $TgsSettingKey $HelmTemplateFolderName $namespace
+        {
+          "cronjob": {
+            "schedule": "0 21 * * *"
+          }
+        }
+      EOF
 
 deploy-prod:
   extends: .deploy-template
@@ -88,5 +97,11 @@ deploy-prod:
     - main
   when: manual
   script:
-    - !reference [.deploy-template, script]
-    - kubectl -n $namespace apply -f artifacts/k8s/cronjob.yaml
+    - |
+      cat << EOF | deploy_k8s $TgsSettingKey $HelmTemplateFolderName $namespace
+        {
+          "cronjob": {
+            "schedule": "0 21 * * *"
+          }
+        }
+      EOF

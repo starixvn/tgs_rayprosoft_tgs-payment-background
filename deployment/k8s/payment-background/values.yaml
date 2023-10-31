@@ -88,3 +88,6 @@ nodeSelector: {}
 tolerations: []
 
 affinity: {}
+
+cronjob:
+  schedule: 0 21 * * *
