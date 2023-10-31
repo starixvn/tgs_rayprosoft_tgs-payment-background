@@ -1,5 +1,5 @@
 ﻿using Google.Protobuf;
-using Tgs.MessageQueue;
+using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background;
 
