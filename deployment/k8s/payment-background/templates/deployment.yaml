@@ -74,31 +74,41 @@ spec:
           resources:
             {{- toYaml .Values.resources | nindent 12 }}
         - name: monitor
-          image: mcr.microsoft.com/dotnet/monitor:6.0.0
-          args: [ "--no-auth" ]
+          image: otel/opentelemetry-collector:0.88.0
           imagePullPolicy: {{ .Values.image.pullPolicy }}
+          args:
+            - --config=/etc/otel/config.yaml
           env:
-            - name: DOTNETMONITOR_DiagnosticPort__ConnectionMode
-              value: Listen
-            - name: DOTNETMONITOR_DiagnosticPort__EndpointName
-              value: /diag/port
-            - name: DOTNETMONITOR_Storage__DumpTempFolder
-              value: /dumps
-            - name: DOTNETMONITOR_Urls
-              value: http://+:52324
-            - name: DOTNETMONITOR_Metrics__Endpoints
-              value: http://+:52325
-            - name: XDG_CONFIG_HOME
-              value: /config
+            - name: NODE_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.hostIP
+          ports:
+            - name: metrics
+              containerPort: 8889
+              protocol: TCP
+            - name: health
+              containerPort: 13133
+              protocol: TCP
+            - name: otlp
+              containerPort: 4317
+              protocol: TCP
           volumeMounts:
-            - mountPath: /diag
-              name: diagvol
-            - mountPath: /dumps
-              name: dumpsvol
-            - mountPath: /config/dotnet-monitor/settings.json
+            - mountPath: /etc/otel/config.yaml
               name: appsettings
               readOnly: true
-              subPath: monitor.settings.json
+              subPath: otel-collector-config.yaml
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            periodSeconds: 2
+            failureThreshold: 30
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: health
+            periodSeconds: 5
           resources:
             requests:
               cpu: 50m

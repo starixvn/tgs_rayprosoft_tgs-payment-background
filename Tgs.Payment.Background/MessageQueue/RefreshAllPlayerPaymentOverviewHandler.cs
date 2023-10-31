@@ -1,4 +1,4 @@
-﻿using Tgs.MessageQueue;
+﻿using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
 

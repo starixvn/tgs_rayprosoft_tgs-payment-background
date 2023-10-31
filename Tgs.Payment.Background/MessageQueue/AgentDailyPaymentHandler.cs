@@ -1,5 +1,5 @@
-﻿using Tgs.MessageQueue;
-using Tgs.Payment.Background.Protos;
+﻿using Tgs.Payment.Background.Protos;
+using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
 

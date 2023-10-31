@@ -15,31 +15,33 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DateOnlyTimeOnly.AspNet" Version="2.0.1" />
-		<PackageReference Include="DateOnlyTimeOnly.AspNet.Swashbuckle" Version="2.0.1" />
-		<PackageReference Include="FluentdForward.OpenTelemetry.MessagePack" Version="0.2.0" />
-		<PackageReference Include="Google.Protobuf" Version="3.21.12" />
-		<PackageReference Include="Grpc.Tools" Version="2.51.0">
+		<PackageReference Include="DateOnlyTimeOnly.AspNet" Version="2.1.1" />
+		<PackageReference Include="DateOnlyTimeOnly.AspNet.Swashbuckle" Version="2.1.1" />
+		<PackageReference Include="FluentdForward.OpenTelemetry.MessagePack" Version="0.3.1" />
+		<PackageReference Include="Google.Protobuf" Version="3.24.4" />
+		<PackageReference Include="Grpc.Tools" Version="2.59.0">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Hangfire.AspNetCore" Version="1.7.32" />
-		<PackageReference Include="Hangfire.MemoryStorage" Version="1.7.0" />
-		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.17.0" />
-		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.4.33">
+		<PackageReference Include="Hangfire.AspNetCore" Version="1.8.6" />
+		<PackageReference Include="Hangfire.MemoryStorage" Version="1.8.0" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.19.5" />
+		<PackageReference Include="Microsoft.VisualStudio.Threading.Analyzers" Version="17.7.30">
 			<PrivateAssets>all</PrivateAssets>
 			<IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
 		</PackageReference>
-		<PackageReference Include="Npgsql.OpenTelemetry" Version="7.0.1" />
-		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.3.2" />
-		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.0.0-rc9.4" />
+		<PackageReference Include="Npgsql.OpenTelemetry" Version="7.0.6" />
+		<PackageReference Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.6.0" />
+		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.6.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.0.0-rc9.4" />
+		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.5.1" />
+		<PackageReference Include="PhoenixToolkits.MessageQueue.InProcess" Version="1.0.4" />
+		<PackageReference Include="PhoenixToolkits.MessageQueue.Nats" Version="1.0.6" />
 		<PackageReference Include="PhoenixToolkits.Protobuf.ExtendTypes" Version="0.0.6" />
 		<PackageReference Include="ProfileViewer.OpenTelemetry.Exporter" Version="0.2.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
-		<PackageReference Include="Tgs.MessageQueue.InProcess" Version="0.0.14" />
-		<PackageReference Include="Tgs.MessageQueue.Nats" Version="2.1.7" />
-		<PackageReference Include="Tgs.WebApi.Toolkits" Version="0.1.1" />
+		<PackageReference Include="Tgs.WebApi.Toolkits" Version="0.3.0" />
+		<PackageReference Include="Tgs.WebApi.Toolkits.Swashbuckle" Version="0.3.1" />
 	</ItemGroup>
 
 	<ItemGroup>

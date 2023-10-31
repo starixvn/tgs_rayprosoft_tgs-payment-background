@@ -1,6 +1,5 @@
 ﻿using Hangfire;
 using Microsoft.AspNetCore.Mvc;
-using Tgs.MessageQueue;
 using Tgs.WebApi.Toolkits;
 
 namespace Tgs.Payment.Background.Controllers;
