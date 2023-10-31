@@ -86,6 +86,7 @@ builder.Services
 			.AddEnvironmentVariableDetector())
 		.AddSource("Tgs.*")
 		.AddSource("TGS.*")
+		.AddSource("Valhalla.*")
 		.AddAspNetCoreInstrumentation()
 		.AddNpgsql()
 		.AddProfileViewExporter()
