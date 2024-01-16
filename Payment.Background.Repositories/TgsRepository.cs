@@ -4,20 +4,14 @@ using Tgs.Payment.Background.Repositories.Entities;
 
 namespace Tgs.Payment.Background.Repositories;
 
-internal class TgsRepository : ITgsRepository
+internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logger) : ITgsRepository
 {
 	private const string PlayerDailyPaymentKey = "PlayerDailyPayment";
 	private const string AgentDailyPaymentKey = "AgentDailyPayment";
 	private const string BrandDailyPaymentKey = "BrandDailyPayment";
 
-	private readonly TgsContext _tgsContext;
-	private readonly ILogger<TgsRepository> _logger;
-
-	public TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logger)
-	{
-		_tgsContext = tgsContext ?? throw new ArgumentNullException(nameof(tgsContext));
-		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-	}
+	private readonly TgsContext _tgsContext = tgsContext ?? throw new ArgumentNullException(nameof(tgsContext));
+	private readonly ILogger<TgsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	public IAsyncEnumerable<string> ProcessPlayerDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
 	{
@@ -782,7 +776,7 @@ internal class TgsRepository : ITgsRepository
 			.ConfigureAwait(false);
 
 		var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
-			new object?[] { updateStatistics.PlayerCode },
+			[updateStatistics.PlayerCode],
 			cancellationToken: cancellationToken).ConfigureAwait(false)
 			?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
 				updateStatistics,

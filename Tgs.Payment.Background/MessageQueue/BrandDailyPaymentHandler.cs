@@ -3,20 +3,18 @@ using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
 
-public class BrandDailyPaymentHandler : IMessageHandler
+public class BrandDailyPaymentHandler(
+	ITgsRepository tgsRepository,
+	IMessageSender messageSender) : IMessageHandler<ReadOnlyMemory<byte>>
 {
-	private readonly ITgsRepository _tgsRepository;
-	private readonly IMessageSender _messageSender;
+	private readonly ITgsRepository _tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
+	private readonly IMessageSender _messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
 
-	public BrandDailyPaymentHandler(
-		ITgsRepository tgsRepository,
-		IMessageSender messageSender)
-	{
-		_tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
-		_messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-	}
-
-	public async ValueTask HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default)
+	public async ValueTask HandleAsync(
+		string subject,
+		ReadOnlyMemory<byte> data,
+		IEnumerable<MessageHeaderValue>? headerValues,
+		CancellationToken cancellationToken = default)
 	{
 		var request = ProcessRequest.Parser.ParseFrom(data.Span);
 

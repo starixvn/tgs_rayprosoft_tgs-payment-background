@@ -23,7 +23,7 @@ data:
           insecure: true
       prometheus:
         endpoint: "0.0.0.0:8889"
-        namespace: "tgs"
+        namespace: "{{.Release.Name}}"
 
     extensions:
       health_check:

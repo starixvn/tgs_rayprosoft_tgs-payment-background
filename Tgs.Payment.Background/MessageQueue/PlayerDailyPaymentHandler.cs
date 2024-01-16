@@ -3,23 +3,20 @@ using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
 
-public class PlayerDailyPaymentHandler : IMessageHandler
+public class PlayerDailyPaymentHandler(
+	ITgsRepository tgsRepository,
+	IPaymentOverviewUpdateSender paymentOverviewUpdateSender,
+	ILogger<PlayerDailyPaymentHandler> logger) : IMessageHandler<ReadOnlyMemory<byte>>
 {
-	private readonly ITgsRepository _tgsRepository;
-	private readonly IPaymentOverviewUpdateSender _paymentOverviewUpdateSender;
-	private readonly ILogger<PlayerDailyPaymentHandler> _logger;
+	private readonly ITgsRepository _tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
+	private readonly IPaymentOverviewUpdateSender _paymentOverviewUpdateSender = paymentOverviewUpdateSender ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateSender));
+	private readonly ILogger<PlayerDailyPaymentHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
-	public PlayerDailyPaymentHandler(
-		ITgsRepository tgsRepository,
-		IPaymentOverviewUpdateSender paymentOverviewUpdateSender,
-		ILogger<PlayerDailyPaymentHandler> logger)
-	{
-		_tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
-		_paymentOverviewUpdateSender = paymentOverviewUpdateSender ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateSender));
-		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-	}
-
-	public async ValueTask HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken)
+	public async ValueTask HandleAsync(
+		string subject,
+		ReadOnlyMemory<byte> data,
+		IEnumerable<MessageHeaderValue>? headerValues,
+		CancellationToken cancellationToken = default)
 	{
 		var request = ProcessRequest.Parser.ParseFrom(data.Span);
 

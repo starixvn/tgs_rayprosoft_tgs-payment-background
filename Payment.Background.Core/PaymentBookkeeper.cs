@@ -7,21 +7,14 @@ using Microsoft.Extensions.Logging;
 
 namespace Tgs.Payment.Background;
 
-internal class PaymentBookkeeper : BackgroundService
+internal class PaymentBookkeeper(
+	IPaymentOverviewUpdateEventSource paymentOverviewUpdateEventSource,
+	IServiceProvider serviceProvider,
+	ILogger<PaymentBookkeeper> logger) : BackgroundService
 {
-	private readonly IPaymentOverviewUpdateEventSource _paymentOverviewUpdateEventSource;
-	private readonly IServiceProvider _serviceProvider;
-	private readonly ILogger<PaymentBookkeeper> _logger;
-
-	public PaymentBookkeeper(
-		IPaymentOverviewUpdateEventSource paymentOverviewUpdateEventSource,
-		IServiceProvider serviceProvider,
-		ILogger<PaymentBookkeeper> logger)
-	{
-		_paymentOverviewUpdateEventSource = paymentOverviewUpdateEventSource ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateEventSource));
-		_serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
-		_logger = logger ?? throw new ArgumentNullException(nameof(logger));
-	}
+	private readonly IPaymentOverviewUpdateEventSource _paymentOverviewUpdateEventSource = paymentOverviewUpdateEventSource ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateEventSource));
+	private readonly IServiceProvider _serviceProvider = serviceProvider ?? throw new ArgumentNullException(nameof(serviceProvider));
+	private readonly ILogger<PaymentBookkeeper> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	protected override Task ExecuteAsync(CancellationToken stoppingToken)
 	{

@@ -22,7 +22,7 @@ public class AgentDailyPaymentHandlerTests
 			ProcessDate = DateOnly.Parse("2022-07-01")
 		};
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessAgentDailyPaymentStatisticsAsync(Arg.Is((DateOnly)request.ProcessDate));
@@ -51,7 +51,7 @@ public class AgentDailyPaymentHandlerTests
 		_ = fakeTgsRepository.GetAgentDailyPaymentStatisticsLastProcessDateAsync()
 			.Returns(DateOnly.Parse("2022-06-28"));
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(0)
 			.ProcessAgentDailyPaymentStatisticsAsync(Arg.Is(DateOnly.Parse("2022-6-28")));
@@ -81,7 +81,7 @@ public class AgentDailyPaymentHandlerTests
 		_ = fakeTgsRepository.GetAgentDailyPaymentStatisticsLastProcessDateAsync()
 			.Returns(DateOnly.Parse("2022-06-30"));
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessAgentDailyPaymentStatisticsAsync(Arg.Is((DateOnly)request.ProcessDate));
@@ -105,7 +105,7 @@ public class AgentDailyPaymentHandlerTests
 		_ = fakeTgsRepository.GetAgentDailyPaymentStatisticsLastProcessDateAsync()
 			.Returns(DateOnly.Parse("2022-06-30"));
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(0)
 			.SetAgentDailyPaymentStatisticsLastProcessDateAsync(Arg.Is((DateOnly)request.ProcessDate));

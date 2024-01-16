@@ -29,7 +29,7 @@ public class PlayerDailyPaymentHandlerTests
 			.ProcessPlayerDailyPaymentStatisticsAsync(Arg.Is((DateOnly)request.ProcessDate))
 			.Returns(new[] { "player1" }.ToAsyncEnumerable());
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		fakePaymentOverviewUpdateSender.Received(1)
 			.Post(Arg.Is("player1"));
@@ -48,7 +48,7 @@ public class PlayerDailyPaymentHandlerTests
 			ProcessDate = DateOnly.Parse("2022-07-01")
 		};
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessPlayerDailyPaymentStatisticsAsync(Arg.Is((DateOnly)request.ProcessDate));
@@ -80,7 +80,7 @@ public class PlayerDailyPaymentHandlerTests
 			Arg.Any<CancellationToken>())
 			.Returns(new[] { "player1" }.ToAsyncEnumerable());
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		fakePaymentOverviewUpdateSender.Received(1)
 			.Post(Arg.Is("player1"));
@@ -105,7 +105,7 @@ public class PlayerDailyPaymentHandlerTests
 		_ = fakeTgsRepository.GetPlayerDailyPaymentStatisticsLastProcessDateAsync()
 			.Returns(DateOnly.Parse("2022-06-30"));
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessPlayerDailyPaymentStatisticsAsync(Arg.Is((DateOnly)request.ProcessDate));
@@ -142,7 +142,7 @@ public class PlayerDailyPaymentHandlerTests
 			.ProcessPlayerDailyPaymentStatisticsAsync(Arg.Is(DateOnly.Parse("2022-7-1")))
 			.Returns(new[] { "player3" }.ToAsyncEnumerable());
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		fakePaymentOverviewUpdateSender.Received(1)
 			.Post(Arg.Is("player1"));
@@ -171,7 +171,7 @@ public class PlayerDailyPaymentHandlerTests
 		_ = fakeTgsRepository.GetPlayerDailyPaymentStatisticsLastProcessDateAsync()
 			.Returns(DateOnly.Parse("2022-06-28"));
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(0)
 			.ProcessPlayerDailyPaymentStatisticsAsync(Arg.Is(DateOnly.Parse("2022-6-28")));
@@ -213,7 +213,7 @@ public class PlayerDailyPaymentHandlerTests
 			.ProcessPlayerDailyPaymentStatisticsAsync(Arg.Is(DateOnly.Parse("2022-6-30")))
 			.Returns(new[] { "player4" }.ToAsyncEnumerable());
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		fakePaymentOverviewUpdateSender.Received(1)
 			.Post(Arg.Is("player1"));
@@ -241,7 +241,7 @@ public class PlayerDailyPaymentHandlerTests
 		_ = fakeTgsRepository.GetPlayerDailyPaymentStatisticsLastProcessDateAsync()
 			.Returns(DateOnly.Parse("2022-06-30"));
 
-		await sut.HandleAsync(request.ToByteArray(), CancellationToken.None);
+		await sut.HandleAsync("test", request.ToByteArray(), null);
 
 		_ = fakeTgsRepository.Received(0)
 			.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(Arg.Is((DateOnly)request.ProcessDate));
