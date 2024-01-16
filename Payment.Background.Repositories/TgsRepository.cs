@@ -888,4 +888,5 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 	public IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(DateTime begin, DateTime end, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 	public ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(DateTime timeRange, IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

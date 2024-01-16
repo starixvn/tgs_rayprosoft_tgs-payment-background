@@ -1,12 +1,13 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using NSubstitute;
+using Valhalla.Messages;
 
 namespace Tgs.Payment.Background.IntegrationTests;
 
 [TestClass]
 public class PaymentBookkeeperTests
 {
-	[TestMethod]
+	[TestMethod, Timeout(1000)]
 	public async Task PaymentBookkeeper會處理玩家金流總覽更新要求()
 	{
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
@@ -16,7 +17,8 @@ public class PaymentBookkeeperTests
 				.ConfigureServices(services => services
 					.AddSingleton(fakeTgsRepository)));
 
-		var sut = web.Services.GetRequiredService<IPaymentOverviewUpdateSender>();
+		var sut = web.Services.GetRequiredService<IEventBus>()
+			.GetEventPublisher<string>(SchedulerConsts.PaymentOverviewUpdateEventName)!;
 
 		var playerCode = "test1";
 
@@ -28,12 +30,12 @@ public class PaymentBookkeeperTests
 				Arg.Any<CancellationToken>()))
 			.Do(_ => tcs.SetResult());
 
-		sut.Post(playerCode);
+		_ = await sut.PublishAsync(playerCode);
 
-		await tcs.Task.WaitAsync(TimeSpan.FromSeconds(1D));
+		await tcs.Task;
 	}
 
-	[TestMethod]
+	[TestMethod, Timeout(1000)]
 	public async Task PaymentBookkeeper收到兩次玩家金流總覽更新要求就會執行兩次更新()
 	{
 		var fakeTgsRepository = Substitute.For<ITgsRepository>();
@@ -43,7 +45,8 @@ public class PaymentBookkeeperTests
 				.ConfigureServices(services => services
 					.AddSingleton(fakeTgsRepository)));
 
-		var sut = web.Services.GetRequiredService<IPaymentOverviewUpdateSender>();
+		var sut = web.Services.GetRequiredService<IEventBus>()
+					.GetEventPublisher<string>(SchedulerConsts.PaymentOverviewUpdateEventName)!;
 
 		var playerCode1 = "test1";
 		var playerCode2 = "test2";
@@ -55,26 +58,18 @@ public class PaymentBookkeeperTests
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode1),
 				Arg.Any<CancellationToken>()))
-			.Do(_ =>
-			{
-				Thread.Sleep(100);
-				tcs1.SetResult();
-			});
+			.Do(_ => tcs1.SetResult());
 		fakeTgsRepository
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode2),
 				Arg.Any<CancellationToken>()))
-			.Do(_ =>
-			{
-				Thread.Sleep(100);
-				tcs2.SetResult();
-			});
+			.Do(_ => tcs2.SetResult());
 
-		sut.Post(playerCode1);
-		sut.Post(playerCode2);
+		_ = await sut.PublishAsync(playerCode1);
+		_ = await sut.PublishAsync(playerCode2);
 
-		await tcs1.Task.WaitAsync(TimeSpan.FromSeconds(1D));
-		await tcs2.Task.WaitAsync(TimeSpan.FromSeconds(1D));
+		await tcs1.Task;
+		await tcs2.Task;
 	}
 
 	[TestMethod]
@@ -87,7 +82,8 @@ public class PaymentBookkeeperTests
 				.ConfigureServices(services => services
 					.AddSingleton(fakeTgsRepository)));
 
-		var sut = web.Services.GetRequiredService<IPaymentOverviewUpdateSender>();
+		var sut = web.Services.GetRequiredService<IEventBus>()
+			.GetEventPublisher<string>(SchedulerConsts.PaymentOverviewUpdateEventName)!;
 
 		var playerCode1 = "test1";
 		var playerCode2 = "test2";
@@ -101,37 +97,25 @@ public class PaymentBookkeeperTests
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode1),
 				Arg.Any<CancellationToken>()))
-			.Do(_ =>
-			{
-				Thread.Sleep(100);
-				tcs1.SetResult();
-			});
+			.Do(_ => tcs1.SetResult());
 		fakeTgsRepository
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode2),
 				Arg.Any<CancellationToken>()))
-			.Do(_ =>
-			{
-				Thread.Sleep(100);
-				tcs2.SetResult();
-			});
+			.Do(_ => tcs2.SetResult());
 		fakeTgsRepository
 			.When(fake => fake.UpdatePlayerPaymentOverviewAsync(
 				Arg.Is(playerCode3),
 				Arg.Any<CancellationToken>()))
-			.Do(_ =>
-			{
-				Thread.Sleep(100);
-				tcs3.SetResult();
-			});
+			.Do(_ => tcs3.SetResult());
 
-		sut.Post(playerCode1);
-		sut.Post(playerCode2);
-		sut.Post(playerCode3);
+		Assert.IsTrue(await sut.PublishAsync(playerCode1));
+		Assert.IsTrue(await sut.PublishAsync(playerCode2));
+		Assert.IsTrue(await sut.PublishAsync(playerCode3));
 
-		await tcs1.Task.WaitAsync(TimeSpan.FromSeconds(1D));
-		await tcs2.Task.WaitAsync(TimeSpan.FromSeconds(1D));
-		await tcs3.Task.WaitAsync(TimeSpan.FromSeconds(1D));
+		await tcs1.Task;
+		await tcs2.Task;
+		await tcs3.Task;
 	}
 
 	[TestMethod]
@@ -144,7 +128,8 @@ public class PaymentBookkeeperTests
 				.ConfigureServices(services => services
 					.AddSingleton(fakeTgsRepository)));
 
-		var sut = web.Services.GetRequiredService<IPaymentOverviewUpdateSender>();
+		var sut = web.Services.GetRequiredService<IEventBus>()
+			.GetEventPublisher<string>(SchedulerConsts.PaymentOverviewUpdateEventName)!;
 
 		var playerCode = "test1";
 
@@ -165,9 +150,9 @@ public class PaymentBookkeeperTests
 			});
 
 		for (var i = 0; i < 5; i++)
-			sut.Post(playerCode);
+			_ = sut.PublishAsync(playerCode);
 		Thread.Sleep(50);
-		sut.Post(playerCode);
+		_ = sut.PublishAsync(playerCode);
 
 		await tcs1.Task.WaitAsync(TimeSpan.FromSeconds(1D));
 		await tcs2.Task.WaitAsync(TimeSpan.FromSeconds(1D));

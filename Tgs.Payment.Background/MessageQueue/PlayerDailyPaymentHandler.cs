@@ -1,16 +1,15 @@
 ﻿using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
+using Valhalla.Messages;
 
 namespace Tgs.Payment.Background.MessageQueue;
 
 public class PlayerDailyPaymentHandler(
 	ITgsRepository tgsRepository,
-	IPaymentOverviewUpdateSender paymentOverviewUpdateSender,
-	ILogger<PlayerDailyPaymentHandler> logger) : IMessageHandler<ReadOnlyMemory<byte>>
+	IEventBus eventBus,
+	ILogger<PlayerDailyPaymentHandler> logger)
+	: IMessageHandler<ReadOnlyMemory<byte>>
 {
-	private readonly ITgsRepository _tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
-	private readonly IPaymentOverviewUpdateSender _paymentOverviewUpdateSender = paymentOverviewUpdateSender ?? throw new ArgumentNullException(nameof(paymentOverviewUpdateSender));
-	private readonly ILogger<PlayerDailyPaymentHandler> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	public async ValueTask HandleAsync(
 		string subject,
@@ -21,31 +20,34 @@ public class PlayerDailyPaymentHandler(
 		var request = ProcessRequest.Parser.ParseFrom(data.Span);
 
 		var requestDate = request.ProcessDate.ToDateOnly();
+		var eventSender = eventBus.GetEventPublisher<string>(SchedulerConsts.PaymentOverviewUpdateEventName)!;
 
 		if (requestDate is null)
 			return;
 
-		var lastProcessDate = await _tgsRepository
+		var lastProcessDate = await tgsRepository
 			.GetPlayerDailyPaymentStatisticsLastProcessDateAsync(cancellationToken)
 			.ConfigureAwait(false);
 
 		if (lastProcessDate is null)
 		{
-			var changePlayers = await _tgsRepository
+			var changePlayers = await tgsRepository
 				.ProcessPlayerDailyPaymentStatisticsAsync(requestDate.Value, cancellationToken)
 				.ToArrayAsync(cancellationToken)
 				.ConfigureAwait(false);
 
-			await _tgsRepository
+			await tgsRepository
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
 
-			_logger.LogDebug("1. Change players is {changePlayers}", string.Join(", ", changePlayers));
+			logger.LogDebug("1. Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 			foreach (var playerCode in changePlayers)
 			{
-				_logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
-				_paymentOverviewUpdateSender.Post(playerCode);
+				logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
+				_ = await eventSender.PublishAsync(
+					playerCode,
+					cancellationToken).ConfigureAwait(false);
 			}
 		}
 		else if (requestDate > lastProcessDate)
@@ -55,23 +57,25 @@ public class PlayerDailyPaymentHandler(
 
 			for (var i = 1; i < diffDays; i++)
 			{
-				var changePlayers = await _tgsRepository
+				var changePlayers = await tgsRepository
 					.ProcessPlayerDailyPaymentStatisticsAsync(
 						lastProcessDate.Value.AddDays(i),
 						cancellationToken)
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
 
-				_logger.LogDebug("2. Change players is {changePlayers}", string.Join(", ", changePlayers));
+				logger.LogDebug("2. Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 				foreach (var playerCode in changePlayers)
 				{
-					_logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
-					_paymentOverviewUpdateSender.Post(playerCode);
+					logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
+					_ = await eventSender.PublishAsync(
+						playerCode,
+						cancellationToken).ConfigureAwait(false);
 				}
 			}
 
-			await _tgsRepository
+			await tgsRepository
 				.SetPlayerDailyPaymentStatisticsLastProcessDateAsync(requestDate.Value, cancellationToken)
 				.ConfigureAwait(false);
 		}
@@ -82,19 +86,21 @@ public class PlayerDailyPaymentHandler(
 
 			for (var i = 0; i < diffDays; i++)
 			{
-				var changePlayers = await _tgsRepository
+				var changePlayers = await tgsRepository
 					.ProcessPlayerDailyPaymentStatisticsAsync(
 						requestDate.Value.AddDays(i),
 						cancellationToken)
 					.ToArrayAsync(cancellationToken)
 					.ConfigureAwait(false);
 
-				_logger.LogDebug("3. Change players is {changePlayers}", string.Join(", ", changePlayers));
+				logger.LogDebug("3. Change players is {changePlayers}", string.Join(", ", changePlayers));
 
 				foreach (var playerCode in changePlayers)
 				{
-					_logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
-					_paymentOverviewUpdateSender.Post(playerCode);
+					logger.LogDebug("Enqueue payment overview update request {playerCode}", playerCode);
+					_ = await eventSender.PublishAsync(
+						playerCode,
+						cancellationToken).ConfigureAwait(false);
 				}
 			}
 		}

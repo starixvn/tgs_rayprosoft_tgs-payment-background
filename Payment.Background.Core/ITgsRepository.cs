@@ -24,6 +24,8 @@ public interface ITgsRepository
 
 	ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default);
 
+	ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default);
+
 	IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(
 		DateTime begin,
 		DateTime end,
