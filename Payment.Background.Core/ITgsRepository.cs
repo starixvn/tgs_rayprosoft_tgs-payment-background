@@ -23,4 +23,14 @@ public interface ITgsRepository
 	ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default);
 
 	ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default);
+
+	IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(
+		DateTime begin,
+		DateTime end,
+		CancellationToken cancellationToken = default);
+
+	ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+		DateTime timeRange,
+		IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries,
+		CancellationToken cancellationToken = default);
 }

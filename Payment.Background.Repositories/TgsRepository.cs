@@ -885,4 +885,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 		}
 	}
+
+	public IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(DateTime begin, DateTime end, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(DateTime timeRange, IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }
