@@ -3,14 +3,9 @@ using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background;
 
-public class PaymentOverviewBackgroundJob
+public class PaymentOverviewBackgroundJob(IMessageSender messageSender)
 {
-	private readonly IMessageSender _messageSender;
-
-	public PaymentOverviewBackgroundJob(IMessageSender messageSender)
-	{
-		_messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
-	}
+	private readonly IMessageSender _messageSender = messageSender ?? throw new ArgumentNullException(nameof(messageSender));
 
 	public async Task ExecuteAsync()
 	{

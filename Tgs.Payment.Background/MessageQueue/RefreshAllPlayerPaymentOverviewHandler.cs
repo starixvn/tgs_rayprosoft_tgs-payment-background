@@ -2,15 +2,14 @@
 
 namespace Tgs.Payment.Background.MessageQueue;
 
-public class RefreshAllPlayerPaymentOverviewHandler : IMessageHandler
+public class RefreshAllPlayerPaymentOverviewHandler(ITgsRepository tgsRepository) : IMessageHandler<ReadOnlyMemory<byte>>
 {
-	private readonly ITgsRepository _tgsRepository;
+	private readonly ITgsRepository _tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
 
-	public RefreshAllPlayerPaymentOverviewHandler(ITgsRepository tgsRepository)
-	{
-		_tgsRepository = tgsRepository ?? throw new ArgumentNullException(nameof(tgsRepository));
-	}
-
-	public ValueTask HandleAsync(ReadOnlyMemory<byte> data, CancellationToken cancellationToken = default)
+	public ValueTask HandleAsync(
+		string subject,
+		ReadOnlyMemory<byte> data,
+		IEnumerable<MessageHeaderValue>? headerValues,
+		CancellationToken cancellationToken = default)
 		=> _tgsRepository.UpdateAllPlayerPaymentOverviewAsync(cancellationToken);
 }
