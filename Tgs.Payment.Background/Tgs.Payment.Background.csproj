@@ -39,6 +39,7 @@
 		<PackageReference Include="PhoenixToolkits.Protobuf.ExtendTypes" Version="0.0.6" />
 		<PackageReference Include="ProfileViewer.OpenTelemetry.Exporter" Version="0.3.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
+		<PackageReference Include="Tgs.MessageQueue.Nats.Serializers" Version="0.0.2" />
 		<PackageReference Include="Tgs.WebApi.Toolkits" Version="0.3.0" />
 		<PackageReference Include="Tgs.WebApi.Toolkits.Swashbuckle" Version="0.3.1" />
 	</ItemGroup>

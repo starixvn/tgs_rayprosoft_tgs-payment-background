@@ -39,6 +39,7 @@
 
   <ItemGroup>
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
+    <Using Include="NSubstitute" />
   </ItemGroup>
 
 </Project>

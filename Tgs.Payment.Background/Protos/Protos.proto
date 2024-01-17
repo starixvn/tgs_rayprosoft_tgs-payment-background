@@ -2,8 +2,8 @@
 
 option csharp_namespace = "Tgs.Payment.Background.Protos";
 
-
 import "phoenix/protobuf/date.proto";
+import "google/protobuf/timestamp.proto";
 
 message ProcessRequest {
 	phoenix.protobuf.DateValue process_date = 1;
@@ -11,4 +11,8 @@ message ProcessRequest {
 
 message UpdatePaymentOverviewRequest {
 	string player_code = 1;
+}
+
+message FiveMinuteProcessRequest {
+	google.protobuf.Timestamp process_date = 1;
 }
