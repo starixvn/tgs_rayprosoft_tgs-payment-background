@@ -19,5 +19,23 @@ partial class TgsContext
 		dailydepositSummary.Property(d => d.Total).HasColumnName("total");
 		dailydepositSummary.Property(d => d.Approved).HasColumnName("approved");
 		dailydepositSummary.Property(d => d.Reject).HasColumnName("reject");
+
+		var userPaymentSummaryStatistics = modelBuilder.Entity<UserPaymentSummaryStatistics>();
+		userPaymentSummaryStatistics.HasNoKey();
+		userPaymentSummaryStatistics.Property(u => u.UserId).HasColumnName("user_id");
+		userPaymentSummaryStatistics.Property(u => u.UserType).HasColumnName("user_type");
+		userPaymentSummaryStatistics.Property(u => u.BrandId).HasColumnName("brand_id");
+		userPaymentSummaryStatistics.Property(u => u.DepositAmount).HasColumnName("deposit_amount");
+		userPaymentSummaryStatistics.Property(u => u.DepositHandlingFee).HasColumnName("deposit_handling_fee");
+		userPaymentSummaryStatistics.Property(u => u.DepositCount).HasColumnName("deposit_count");
+		userPaymentSummaryStatistics.Property(u => u.FirstDepositAmount).HasColumnName("first_deposit_amount");
+		userPaymentSummaryStatistics.Property(u => u.FirstDepositHandlingFee).HasColumnName("first_deposit_handling_fee");
+		userPaymentSummaryStatistics.Property(u => u.FirstDepositOn).HasColumnName("first_deposit_on");
+		userPaymentSummaryStatistics.Property(u => u.WithdrawAmount).HasColumnName("withdraw_amount");
+		userPaymentSummaryStatistics.Property(u => u.WithdrawHandlingFee).HasColumnName("withdraw_handling_fee");
+		userPaymentSummaryStatistics.Property(u => u.WithdrawCount).HasColumnName("withdraw_count");
+		userPaymentSummaryStatistics.Property(u => u.FirstWithdrawAmount).HasColumnName("first_withdraw_amount");
+		userPaymentSummaryStatistics.Property(u => u.FirstWithdrawHandlingFee).HasColumnName("first_withdraw_handling_fee");
+		userPaymentSummaryStatistics.Property(u => u.FirstWithdrawOn).HasColumnName("first_withdraw_on");
 	}
 }

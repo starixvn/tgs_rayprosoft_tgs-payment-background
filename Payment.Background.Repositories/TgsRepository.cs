@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Tgs.Payment.Background.Repositories.Entities;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Tgs.Payment.Background.Repositories;
 
@@ -9,6 +10,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 	private const string PlayerDailyPaymentKey = "PlayerDailyPayment";
 	private const string AgentDailyPaymentKey = "AgentDailyPayment";
 	private const string BrandDailyPaymentKey = "BrandDailyPayment";
+	private const string FiveMinutesPaymentKey = "FiveMinutesUserPaymentSummary";
 
 	private readonly TgsContext _tgsContext = tgsContext ?? throw new ArgumentNullException(nameof(tgsContext));
 	private readonly ILogger<TgsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -886,8 +888,162 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		}
 	}
 
-	public IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(DateTime begin, DateTime end, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(
+		DateTime begin,
+		DateTime end,
+		CancellationToken cancellationToken = default)
+		=> _tgsContext.Set<UserPaymentSummaryStatistics>()
+			.FromSqlInterpolated($"""
+				WITH depositStatistics
+				(
+				    player_code,
+				    user_type,
+				    brand_id,
+				    deposit_amount,
+				    deposit_handling_fee,
+				    first_deposit_on,
+				    first_deposit_amount,
+				    first_deposit_handling_fee,
+				    deposit_count
+				)
+				AS
+				(
+				    SELECT
+				        player_code,
+				        1 AS user_type,
+				        brand_id,
+				        Sum(deposit_amount) AS deposit_amount,
+				        Sum(handling_fee) AS deposit_handling_fee,
+				        Min(first_deposit_on) AS first_deposit_on,
+				        Min(first_deposit_amount) AS first_deposit_amount,
+				        Min(first_deposit_handling_fee) AS first_deposit_handling_fee,
+				        Count(1) AS deposit_count
+				    FROM
+				        (
+				            SELECT
+				                player_code,
+				                brand_id,
+				                COALESCE(actual_amount, amount) AS deposit_amount,
+				                handling_fee AS handling_fee,
+				                First_Value(updated_on) OVER w AS first_deposit_on,
+				                First_Value(COALESCE(actual_amount, amount)) OVER w AS first_deposit_amount,
+				                First_Value(handling_fee) OVER w AS first_deposit_handling_fee
+				            FROM
+				                dbo.deposit_forms
+				            WHERE
+				                status = 8000
+				                AND
+				                updated_on >= {begin}
+				                AND
+				                updated_on < {end}
+				            WINDOW w AS (PARTITION BY player_code ORDER BY updated_on ASC)
+				        ) AS T
+				    GROUP BY
+				        player_code,
+				        brand_id
+				),
+				withdrawStatistics
+				(
+				    user_id,
+				    user_type,
+				    brand_id,
+				    withdraw_amount,
+				    withdraw_handling_fee,
+				    first_withdraw_on,
+				    first_withdraw_amount,
+				    first_withdraw_handling_fee,
+				    withdraw_count
+				)
+				AS
+				(
+				    SELECT
+				        user_id,
+				        user_type,
+				        brand_id,
+				        Sum(withdraw_amount) AS withdraw_amount,
+				        Sum(handling_fee) AS withdraw_handling_fee,
+				        Min(first_withdraw_on) AS daily_first_withdraw_on,
+				        Min(first_withdraw_amount) AS daily_first_withdraw_amount,
+				        Min(first_withdraw_handling_fee) AS daily_first_withdraw_handling_fee,
+				        Count(1) AS withdraw_count
+				    FROM
+				        (
+				            SELECT
+				                user_id,
+				                user_type,
+				                brand_id,
+				                paid_on,
+				                COALESCE(actual_amount, amount) AS withdraw_amount,
+				                handling_fee,
+				                First_Value(paid_on) OVER w AS first_withdraw_on,
+				                First_Value(COALESCE(actual_amount, amount)) OVER w AS first_withdraw_amount,
+				                First_Value(handling_fee) OVER w AS first_withdraw_handling_fee
+				            FROM
+				                dbo.withdraw_forms
+				            WHERE
+				                status = 9000
+				                AND
+				                paid_on >= {begin}
+				                AND
+				                paid_on < {end}
+				            WINDOW w AS (PARTITION BY user_id ORDER BY paid_on ASC)
+				        ) AS T
+				    GROUP BY
+				        user_id,
+				        user_type,
+				        brand_id
+				)
+				SELECT
+				    COALESCE(DS.player_code, WS.user_id) AS user_id,
+				    COALESCE(DS.user_type, WS.user_type) AS user_type,
+				    COALESCE(DS.brand_id, WS.brand_id) AS brand_id,
+				    DS.deposit_amount,
+				    DS.deposit_handling_fee,
+				    DS.deposit_count,
+				    DS.first_deposit_amount,
+				    DS.first_deposit_handling_fee,
+				    DS.first_deposit_on,
+				    WS.withdraw_amount,
+				    WS.withdraw_count,
+				    WS.withdraw_handling_fee,
+				    WS.first_withdraw_amount,
+				    WS.first_withdraw_handling_fee,
+				    WS.first_withdraw_on
+				FROM
+				    depositStatistics AS DS
+				    FULL OUTER JOIN
+				    withdrawStatistics AS WS ON DS.player_code = WS.user_id
+				        AND DS.user_type = WS.user_type
+				        AND DS.brand_id = WS.brand_id;
+				""")
+			.AsNoTracking()
+			.ToAsyncEnumerable();
+
 	public ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(DateTime timeRange, IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries, CancellationToken cancellationToken = default) => throw new NotImplementedException();
-	public ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-	public ValueTask SetUserFiveMinutesLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+
+	public async ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default)
+	{
+		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+			.FindAsync([FiveMinutesPaymentKey], cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		return setting?.ProcessedTime.ToUniversalTime();
+	}
+
+	public async ValueTask SetUserFiveMinutesLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default)
+	{
+		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+			.FindAsync([FiveMinutesPaymentKey], cancellationToken: cancellationToken)
+			.ConfigureAwait(false)
+			?? (await _tgsContext.BackgroundPaymentStatisticsSettings.AddAsync(
+				new BackgroundPaymentStatisticsSetting
+				{
+					RecordKey = FiveMinutesPaymentKey
+				},
+				cancellationToken).ConfigureAwait(false)).Entity;
+
+		setting.ProcessedTime = newProcessTime.ToUniversalTime();
+
+		_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+	}
 }
