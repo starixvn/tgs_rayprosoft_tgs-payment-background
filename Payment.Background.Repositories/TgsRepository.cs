@@ -1,6 +1,7 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Tgs.Payment.Background.Repositories.Entities;
+using Tgs.Payment.Background.Repositories.Entities.Models;
 using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Tgs.Payment.Background.Repositories;
@@ -11,9 +12,6 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 	private const string AgentDailyPaymentKey = "AgentDailyPayment";
 	private const string BrandDailyPaymentKey = "BrandDailyPayment";
 	private const string FiveMinutesPaymentKey = "FiveMinutesUserPaymentSummary";
-
-	private readonly TgsContext _tgsContext = tgsContext ?? throw new ArgumentNullException(nameof(tgsContext));
-	private readonly ILogger<TgsRepository> _logger = logger ?? throw new ArgumentNullException(nameof(logger));
 
 	public IAsyncEnumerable<string> ProcessPlayerDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
 	{
@@ -32,7 +30,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 						.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc),
 					TimeSpan.Zero));
 
-			var processData = await _tgsContext.PlayerDailyPaymentStatistics
+			var processData = await tgsContext.PlayerDailyPaymentStatistics
 				.FromSqlInterpolated($"""
 					SELECT
 						COALESCE(D.player_code, W.player_code) AS player_code,
@@ -228,7 +226,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 				.ToArrayAsync(cancellationToken: cancellationToken)
 				.ConfigureAwait(false);
 
-			var existsData = await _tgsContext.PlayerDailyPaymentStatistics
+			var existsData = await tgsContext.PlayerDailyPaymentStatistics
 				.Where(row => row.ReportDate == From)
 				.ToArrayAsync(cancellationToken: cancellationToken)
 				.ConfigureAwait(false);
@@ -274,13 +272,13 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 					modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
 				}
 				else
-					_ = await _tgsContext.PlayerDailyPaymentStatistics
+					_ = await tgsContext.PlayerDailyPaymentStatistics
 						.AddAsync(p.Input, cancellationToken)
 						.ConfigureAwait(false);
 
-			_tgsContext.RemoveRange(rightJoin);
+			tgsContext.RemoveRange(rightJoin);
 
-			_ = await _tgsContext
+			_ = await tgsContext
 				.SaveChangesAsync(cancellationToken)
 				.ConfigureAwait(false);
 
@@ -297,7 +295,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 	public async ValueTask<DateOnly?> GetPlayerDailyPaymentStatisticsLastProcessDateAsync(CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FirstOrDefaultAsync(
 				setting => setting.RecordKey == PlayerDailyPaymentKey,
 				cancellationToken: cancellationToken)
@@ -314,12 +312,12 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 	public async ValueTask SetPlayerDailyPaymentStatisticsLastProcessDateAsync(DateOnly date, CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FirstOrDefaultAsync(
 				setting => setting.RecordKey == PlayerDailyPaymentKey,
 				cancellationToken: cancellationToken)
 			.ConfigureAwait(false)
-			?? _tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
+			?? tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
 			{
 				RecordKey = PlayerDailyPaymentKey
 			}).Entity;
@@ -328,7 +326,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.AddDays(-1)
 			.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc);
 
-		_ = await _tgsContext
+		_ = await tgsContext
 			.SaveChangesAsync(cancellationToken)
 			.ConfigureAwait(false);
 	}
@@ -338,7 +336,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		var queryDate = processDate.AddDays(-1);
 		var undepositAgainCheckDate = processDate.AddDays(-3);
 
-		var processData = await _tgsContext.AgentDailyPaymentStatistics
+		var processData = await tgsContext.AgentDailyPaymentStatistics
 			.FromSqlInterpolated($"""
 				WITH CTE(
 					player_code,
@@ -419,7 +417,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
-		var existsData = await _tgsContext.AgentDailyPaymentStatistics
+		var existsData = await tgsContext.AgentDailyPaymentStatistics
 			.Where(row => row.ReportDate == queryDate)
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
@@ -456,20 +454,20 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 				modifyRow.DepositPlayers = p.Input.DepositPlayers;
 			}
 			else
-				_ = await _tgsContext.AgentDailyPaymentStatistics
+				_ = await tgsContext.AgentDailyPaymentStatistics
 					.AddAsync(p.Input, cancellationToken)
 					.ConfigureAwait(false);
 
-		_tgsContext.RemoveRange(rightJoin);
+		tgsContext.RemoveRange(rightJoin);
 
-		_ = await _tgsContext
+		_ = await tgsContext
 			.SaveChangesAsync(cancellationToken)
 			.ConfigureAwait(false);
 	}
 
 	public async ValueTask<DateOnly?> GetAgentDailyPaymentStatisticsLastProcessDateAsync(CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FirstOrDefaultAsync(
 				setting => setting.RecordKey == AgentDailyPaymentKey,
 				cancellationToken: cancellationToken)
@@ -486,12 +484,12 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 	public async ValueTask SetAgentDailyPaymentStatisticsLastProcessDateAsync(DateOnly date, CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FirstOrDefaultAsync(
 				setting => setting.RecordKey == AgentDailyPaymentKey,
 				cancellationToken: cancellationToken)
 			.ConfigureAwait(false)
-			?? _tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
+			?? tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
 			{
 				RecordKey = AgentDailyPaymentKey
 			}).Entity;
@@ -500,14 +498,14 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.AddDays(-1)
 			.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc);
 
-		_ = await _tgsContext
+		_ = await tgsContext
 			.SaveChangesAsync(cancellationToken)
 			.ConfigureAwait(false);
 	}
 
 	public async ValueTask<DateOnly?> GetBrandDailyPaymentStatisticsLastProcessDateAsync(CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FirstOrDefaultAsync(
 				setting => setting.RecordKey == BrandDailyPaymentKey,
 				cancellationToken: cancellationToken)
@@ -524,12 +522,12 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 	public async ValueTask SetBrandDailyPaymentStatisticsLastProcessDateAsync(DateOnly date, CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FirstOrDefaultAsync(
 				setting => setting.RecordKey == BrandDailyPaymentKey,
 				cancellationToken: cancellationToken)
 			.ConfigureAwait(false)
-			?? _tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
+			?? tgsContext.BackgroundPaymentStatisticsSettings.Add(new BackgroundPaymentStatisticsSetting
 			{
 				RecordKey = BrandDailyPaymentKey
 			}).Entity;
@@ -538,7 +536,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.AddDays(-1)
 			.ToDateTime(TimeOnly.FromTimeSpan(TimeSpan.FromHours(16D)), DateTimeKind.Utc);
 
-		_ = await _tgsContext
+		_ = await tgsContext
 			.SaveChangesAsync(cancellationToken)
 			.ConfigureAwait(false);
 	}
@@ -548,7 +546,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		var queryDate = processDate.AddDays(-1);
 		var undepositAgainCheckDate = processDate.AddDays(-3);
 
-		var depositStatistics = await _tgsContext.Set<DailyBrandDepositStatusSummary>()
+		var depositStatistics = await tgsContext.Set<DailyBrandDepositStatusSummary>()
 			.FromSqlInterpolated($@"
 				SELECT
 					brand_id,
@@ -575,7 +573,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			row.DailyDepositRejectCount = depositStatisticsByKey?.Reject;
 		}
 
-		var processData = await _tgsContext.BrandDailyPaymentStatistics
+		var processData = await tgsContext.BrandDailyPaymentStatistics
 			.FromSqlInterpolated($@"
 				WITH CTE(
 					player_code,
@@ -656,7 +654,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.ToArrayAsync(cancellationToken)
 			.ConfigureAwait(false);
 
-		var existsData = await _tgsContext.BrandDailyPaymentStatistics
+		var existsData = await tgsContext.BrandDailyPaymentStatistics
 			.Where(row => row.ReportDate == queryDate)
 			.ToArrayAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
@@ -696,22 +694,22 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 				modifyRow.DailyDepositRejectCount = p.Input.DailyDepositRejectCount;
 			}
 			else
-				_ = await _tgsContext.BrandDailyPaymentStatistics
+				_ = await tgsContext.BrandDailyPaymentStatistics
 					.AddAsync(p.Input, cancellationToken)
 					.ConfigureAwait(false);
 
-		_tgsContext.RemoveRange(rightJoin);
+		tgsContext.RemoveRange(rightJoin);
 
-		_ = await _tgsContext
+		_ = await tgsContext
 			.SaveChangesAsync(cancellationToken)
 			.ConfigureAwait(false);
 	}
 
 	public async ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default)
 	{
-		_logger.LogDebug("UpdatePlayerPaymentOverview {playerCode}", playerCode);
+		logger.LogDebug("UpdatePlayerPaymentOverview {playerCode}", playerCode);
 
-		var playerLastestRow = await _tgsContext.PlayerDailyPaymentStatistics
+		var playerLastestRow = await tgsContext.PlayerDailyPaymentStatistics
 			.Where(row => row.PlayerCode == playerCode)
 			.OrderByDescending(row => row.ReportDate)
 			.FirstOrDefaultAsync(cancellationToken: cancellationToken)
@@ -719,13 +717,13 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 		if (playerLastestRow is null)
 		{
-			_logger.LogWarning("Player ({playerCode}) has not found statistics data.", playerCode);
+			logger.LogWarning("Player ({playerCode}) has not found statistics data.", playerCode);
 			return;
 		}
 
 		var reportDate = playerLastestRow.ReportDate;
 
-		var updateStatistics = await _tgsContext.PlayerPaymentOverviews
+		var updateStatistics = await tgsContext.PlayerPaymentOverviews
 			.FromSqlInterpolated($"""
 				WITH CTE (
 					player_code,
@@ -777,10 +775,10 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.FirstAsync(cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
-		var updateOverview = await _tgsContext.PlayerPaymentOverviews.FindAsync(
+		var updateOverview = await tgsContext.PlayerPaymentOverviews.FindAsync(
 			[updateStatistics.PlayerCode],
 			cancellationToken: cancellationToken).ConfigureAwait(false)
-			?? (await _tgsContext.PlayerPaymentOverviews.AddAsync(
+			?? (await tgsContext.PlayerPaymentOverviews.AddAsync(
 				updateStatistics,
 				cancellationToken).ConfigureAwait(false)).Entity;
 
@@ -794,12 +792,12 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		updateOverview.FirstWithdrawOn = updateStatistics.FirstWithdrawOn;
 		updateOverview.RecordedBy = updateStatistics.RecordedBy;
 
-		_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+		_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
 
 	public async ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default)
 	{
-		var updateStatistics = _tgsContext.PlayerPaymentOverviews
+		var updateStatistics = tgsContext.PlayerPaymentOverviews
 			.FromSqlInterpolated($"""
 				WITH CTE (
 					player_code,
@@ -851,7 +849,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.AsNoTracking();
 
 		var query = await (from s in updateStatistics
-						   join row in _tgsContext.PlayerPaymentOverviews
+						   join row in tgsContext.PlayerPaymentOverviews
 							   on s.PlayerCode equals row.PlayerCode
 							   into g
 						   from row in g.DefaultIfEmpty()
@@ -866,12 +864,12 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		foreach (var updateInfo in query)
 		{
 			if (updateInfo.Exists is null)
-				(await _tgsContext.PlayerPaymentOverviews
+				(await tgsContext.PlayerPaymentOverviews
 					.AddAsync(updateInfo.Statistics, cancellationToken)
 					.ConfigureAwait(false)).State = EntityState.Added;
 			else
 			{
-				_tgsContext.PlayerPaymentOverviews.Attach(updateInfo.Exists).State = EntityState.Modified;
+				tgsContext.PlayerPaymentOverviews.Attach(updateInfo.Exists).State = EntityState.Modified;
 
 				updateInfo.Exists.TotalDepositAmount = updateInfo.Statistics.TotalDepositAmount;
 				updateInfo.Exists.TotalWithdrawAmount = updateInfo.Statistics.TotalWithdrawAmount;
@@ -884,7 +882,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 				updateInfo.Exists.RecordedBy = updateInfo.Statistics.RecordedBy;
 			}
 
-			_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+			_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 		}
 	}
 
@@ -892,7 +890,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		DateTime begin,
 		DateTime end,
 		CancellationToken cancellationToken = default)
-		=> _tgsContext.Set<UserPaymentSummaryStatistics>()
+		=> tgsContext.Set<UserPaymentSummaryStatistics>()
 			.FromSqlInterpolated($"""
 				WITH depositStatistics
 				(
@@ -1019,11 +1017,89 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 			.AsNoTracking()
 			.ToAsyncEnumerable();
 
-	public ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(DateTime timeRange, IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public async ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+		DateTime timeRange,
+		IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries,
+		CancellationToken cancellationToken = default)
+	{
+		var inputSummaries = userPaymentSummaries
+			.Select(s => new FiveMinutesPaymentStatistics
+			{
+				BrandId = s.BrandId,
+				UserType = (int)s.UserType,
+				UserId = s.UserId,
+				TimePoint = timeRange,
+				DepositAmount = s.DepositAmount,
+				DepositCount = s.DepositCount,
+				DepositHandlingFee = s.DepositHandlingFee,
+				FirstDepositAmount = s.FirstDepositAmount,
+				FirstDepositHandlingFee = s.FirstDepositHandlingFee,
+				FirstDepositOn = s.FirstDepositOn,
+				FirstWithdrawAmount = s.FirstWithdrawAmount,
+				FirstWithdrawHandlingFee = s.FirstWithdrawHandlingFee,
+				FirstWithdrawOn = s.FirstWithdrawOn,
+				WithdrawAmount = s.WithdrawAmount,
+				WithdrawCount = s.WithdrawCount,
+				WithdrawHandlingFee = s.WithdrawHandlingFee,
+			})
+			.ToArray();
+
+		var originSummaries = await tgsContext.FiveMinutesPaymentStatistics
+			.Where(row => row.TimePoint == timeRange)
+			.ToArrayAsync(cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		var leftJoin = from input in inputSummaries
+					   join db in originSummaries
+						on new { input.TimePoint, input.UserId, input.UserType, input.BrandId }
+							equals new { db.TimePoint, db.UserId, db.UserType, db.BrandId } into g
+					   from db in g.DefaultIfEmpty()
+					   select new
+					   {
+						   Input = input,
+						   Db = db
+					   };
+
+		var rightJoin = from db in originSummaries
+						join input in inputSummaries
+							on new { db.TimePoint, db.UserId, db.UserType, db.BrandId }
+								equals new { input.TimePoint, input.UserId, input.UserType, input.BrandId } into g
+						from input in g.DefaultIfEmpty()
+						where input is null
+						select db;
+
+		foreach (var p in leftJoin)
+			if (p.Db is not null)
+			{
+				var modifyRow = p.Db;
+				modifyRow.DepositAmount = p.Input.DepositAmount;
+				modifyRow.DepositCount = p.Input.DepositCount;
+				modifyRow.DepositHandlingFee = p.Input.DepositHandlingFee;
+				modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
+				modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
+				modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
+				modifyRow.WithdrawAmount = p.Input.WithdrawAmount;
+				modifyRow.WithdrawCount = p.Input.WithdrawCount;
+				modifyRow.WithdrawHandlingFee = p.Input.WithdrawHandlingFee;
+				modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
+				modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
+				modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
+			}
+			else
+				_ = await tgsContext.FiveMinutesPaymentStatistics
+					.AddAsync(p.Input, cancellationToken)
+					.ConfigureAwait(false);
+
+		tgsContext.FiveMinutesPaymentStatistics.RemoveRange(rightJoin);
+
+		_ = await tgsContext
+			.SaveChangesAsync(cancellationToken)
+			.ConfigureAwait(false);
+	}
 
 	public async ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FindAsync([FiveMinutesPaymentKey], cancellationToken: cancellationToken)
 			.ConfigureAwait(false);
 
@@ -1032,10 +1108,10 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 	public async ValueTask SetUserFiveMinutesLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default)
 	{
-		var setting = await _tgsContext.BackgroundPaymentStatisticsSettings
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
 			.FindAsync([FiveMinutesPaymentKey], cancellationToken: cancellationToken)
 			.ConfigureAwait(false)
-			?? (await _tgsContext.BackgroundPaymentStatisticsSettings.AddAsync(
+			?? (await tgsContext.BackgroundPaymentStatisticsSettings.AddAsync(
 				new BackgroundPaymentStatisticsSetting
 				{
 					RecordKey = FiveMinutesPaymentKey
@@ -1044,6 +1120,6 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 		setting.ProcessedTime = newProcessTime.ToUniversalTime();
 
-		_ = await _tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+		_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
 }

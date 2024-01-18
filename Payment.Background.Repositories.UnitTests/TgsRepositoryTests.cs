@@ -8,6 +8,8 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Tgs.Payment.Background;
 using Tgs.Payment.Background.Repositories;
 using Tgs.Payment.Background.Repositories.Entities;
+using Tgs.Payment.Background.Repositories.Entities.Models;
+using Xunit;
 
 namespace Payment.Background.Repositories.UnitTests;
 
@@ -136,5 +138,173 @@ public class TgsRepositoryTests
 		// Assert
 		Assert.NotNull(actual);
 		_ = Assert.Single(actual);
+	}
+
+	[Fact]
+	public async Task TgsRepository_更新5分鐘匯總資料()
+	{
+		// Arrange
+		var dbContextOptions = new DbContextOptionsBuilder<TgsContext>()
+			.UseInMemoryDatabase(Guid.NewGuid().ToString())
+			.ConfigureWarnings(builder => builder.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+			.Options;
+
+		var dbContext = new TgsContext(dbContextOptions);
+
+		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+
+		var timeRange = DateTime.ParseExact("2024-01-18T14:25:00.0000000Z", "o", null).ToUniversalTime();
+		var summaries = new[]
+		{
+			new UserPaymentSummaryStatistics(
+				"test1",
+				UserType.Player,
+				Guid.NewGuid(),
+				100M,
+				0M,
+				1,
+				100M,
+				0M,
+				DateTime.UtcNow,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null)
+		};
+
+		// Act
+		await sut.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(timeRange, summaries);
+		var actual = await dbContext.FiveMinutesPaymentStatistics.ToArrayAsync();
+
+		// Assert
+		Assert.NotNull(actual);
+		_ = Assert.Single(actual);
+		Assert.Equal(timeRange, actual[0].TimePoint);
+	}
+
+	[Fact]
+	public async Task TgsRepository_更新5分鐘匯總資料_重複的會蓋成新資料()
+	{
+		// Arrange
+		var dbContextOptions = new DbContextOptionsBuilder<TgsContext>()
+			.UseInMemoryDatabase(Guid.NewGuid().ToString())
+			.ConfigureWarnings(builder => builder.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+			.Options;
+
+		var dbContext = new TgsContext(dbContextOptions);
+
+		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+
+		var timeRange = DateTime.ParseExact("2024-01-18T14:25:00.0000000Z", "o", null).ToUniversalTime();
+		var summaries = new[]
+		{
+			new UserPaymentSummaryStatistics(
+				"test1",
+				UserType.Player,
+				Guid.NewGuid(),
+				100M,
+				0M,
+				1,
+				100M,
+				0M,
+				DateTime.UtcNow,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null)
+		};
+
+		_ = await dbContext.FiveMinutesPaymentStatistics.AddAsync(new FiveMinutesPaymentStatistics
+		{
+			TimePoint = timeRange,
+			UserId = summaries[0].UserId,
+			UserType = (int)summaries[0].UserType,
+			BrandId = summaries[0].BrandId,
+			DepositAmount = 200M,
+			DepositCount = summaries[0].DepositCount,
+			DepositHandlingFee = summaries[0].DepositHandlingFee,
+			FirstDepositAmount = summaries[0].FirstDepositAmount,
+			FirstDepositHandlingFee = summaries[0].FirstDepositHandlingFee,
+			FirstDepositOn = summaries[0].FirstDepositOn,
+			FirstWithdrawAmount = summaries[0].FirstWithdrawAmount,
+			FirstWithdrawHandlingFee = summaries[0].FirstWithdrawHandlingFee,
+			FirstWithdrawOn = summaries[0].FirstWithdrawOn,
+			WithdrawAmount = summaries[0].WithdrawAmount,
+			WithdrawCount = summaries[0].WithdrawCount,
+			WithdrawHandlingFee = summaries[0].WithdrawHandlingFee
+		});
+		_ = await dbContext.SaveChangesAsync();
+
+		// Act
+		await sut.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(timeRange, summaries);
+		var actual = await dbContext.FiveMinutesPaymentStatistics.ToArrayAsync();
+
+		// Assert
+		Assert.NotNull(actual);
+		_ = Assert.Single(actual);
+		Assert.Equal(100M, actual[0].DepositAmount);
+	}
+
+	[Fact]
+	public async Task TgsRepository_更新5分鐘匯總資料_會刪除多出來的資料()
+	{
+		// Arrange
+		var dbContextOptions = new DbContextOptionsBuilder<TgsContext>()
+			.UseInMemoryDatabase(Guid.NewGuid().ToString())
+			.ConfigureWarnings(builder => builder.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+			.Options;
+
+		var dbContext = new TgsContext(dbContextOptions);
+
+		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+
+		var timeRange = DateTime.ParseExact("2024-01-18T14:25:00.0000000Z", "o", null).ToUniversalTime();
+		var summaries = new[]
+		{
+			new UserPaymentSummaryStatistics(
+				"test1",
+				UserType.Player,
+				Guid.NewGuid(),
+				100M,
+				0M,
+				1,
+				100M,
+				0M,
+				DateTime.UtcNow,
+				null,
+				null,
+				null,
+				null,
+				null,
+				null)
+		};
+
+		_ = await dbContext.FiveMinutesPaymentStatistics.AddAsync(new FiveMinutesPaymentStatistics
+		{
+			TimePoint = timeRange,
+			UserId = "test2",
+			UserType = (int)UserType.Player,
+			BrandId = Guid.NewGuid(),
+			DepositAmount = 200M,
+			DepositCount = 1,
+			DepositHandlingFee = 0M,
+			FirstDepositAmount = 200M,
+			FirstDepositHandlingFee = 0M,
+			FirstDepositOn = DateTime.UtcNow
+		});
+		_ = await dbContext.SaveChangesAsync();
+
+		// Act
+		await sut.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(timeRange, summaries);
+		var actual = await dbContext.FiveMinutesPaymentStatistics.ToArrayAsync();
+
+		// Assert
+		Assert.NotNull(actual);
+		_ = Assert.Single(actual);
+		Assert.Equal("test1", actual[0].UserId);
 	}
 }
