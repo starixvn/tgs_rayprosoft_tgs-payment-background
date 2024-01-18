@@ -21,19 +21,19 @@ public partial class DepositForm
 
     public DateTime CreatedOn { get; set; }
 
+    public decimal HandlingFee { get; set; }
+
+    public string? OrderNo { get; set; }
+
     public string? PaymentReturn { get; set; }
 
     public string PlayerCode { get; set; } = null!;
 
     public Guid? PromotionId { get; set; }
 
+    public int? PromotionPlayerId { get; set; }
+
     public string? Remark { get; set; }
-
-    public int Status { get; set; }
-
-    public DateTime UpdatedOn { get; set; }
-
-    public string? ThirdPartyOrderNo { get; set; }
 
     public DateTime? ReviewedOn { get; set; }
 
@@ -41,13 +41,13 @@ public partial class DepositForm
 
     public string? ReviewedUserName { get; set; }
 
-    public string? OrderNo { get; set; }
-
-    public int? PromotionPlayerId { get; set; }
-
-    public decimal HandlingFee { get; set; }
-
     public Guid? SnapshotEventId { get; set; }
+
+    public int Status { get; set; }
+
+    public string? ThirdPartyOrderNo { get; set; }
+
+    public DateTime UpdatedOn { get; set; }
 
     public virtual Player PlayerCodeNavigation { get; set; } = null!;
 }

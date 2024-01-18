@@ -8,8 +8,6 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Tgs.Payment.Background;
 using Tgs.Payment.Background.Repositories;
 using Tgs.Payment.Background.Repositories.Entities;
-using Tgs.Payment.Background.Repositories.Entities.Models;
-using Xunit;
 
 namespace Payment.Background.Repositories.UnitTests;
 
@@ -218,7 +216,7 @@ public class TgsRepositoryTests
 				null)
 		};
 
-		_ = await dbContext.FiveMinutesPaymentStatistics.AddAsync(new FiveMinutesPaymentStatistics
+		_ = await dbContext.FiveMinutesPaymentStatistics.AddAsync(new FiveMinutesPaymentStatistic
 		{
 			TimePoint = timeRange,
 			UserId = summaries[0].UserId,
@@ -283,7 +281,7 @@ public class TgsRepositoryTests
 				null)
 		};
 
-		_ = await dbContext.FiveMinutesPaymentStatistics.AddAsync(new FiveMinutesPaymentStatistics
+		_ = await dbContext.FiveMinutesPaymentStatistics.AddAsync(new FiveMinutesPaymentStatistic
 		{
 			TimePoint = timeRange,
 			UserId = "test2",

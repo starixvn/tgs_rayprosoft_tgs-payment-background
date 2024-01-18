@@ -96,4 +96,30 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 				Arg.Any<DateTime>(),
 				Arg.Any<DateTime>());
 	}
+
+	[TestMethod]
+	public async Task FiveMinutesUserPaymentSummaryHandler_當還沒有上次處理時間時會處理前5分鐘的資料_處理時間剛好在5分的刻度上()
+	{
+		var fakeTgsRepository = Substitute.For<ITgsRepository>();
+		var sut = new FiveMinutesUserPaymentSummaryHandler(fakeTgsRepository);
+
+		var processDate = DateTime.ParseExact("2024-01-18T16:00:00.0000000Z", "o", null).ToUniversalTime();
+		var request = new FiveMinuteProcessRequest
+		{
+			ProcessDate = Timestamp.FromDateTime(processDate)
+		};
+
+		await sut.HandleAsync("test", request, null);
+
+		_ = fakeTgsRepository.Received(1)
+			.QueryUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-18T15:55:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Is(DateTime.ParseExact("2024-01-18T16:00:00.0000000Z", "o", null).ToUniversalTime()));
+		_ = fakeTgsRepository.Received(1)
+			.QueryUserPaymentSummaryStatisticsAsync(
+				Arg.Any<DateTime>(),
+				Arg.Any<DateTime>());
+		_ = fakeTgsRepository.SetUserFiveMinutesLastProcessTimeAsync(
+			Arg.Is(DateTime.ParseExact("2024-01-18T16:00:00.0000000Z", "o", null).ToUniversalTime()));
+	}
 }

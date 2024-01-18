@@ -9,43 +9,27 @@ public partial class WithdrawForm
 {
     public Guid Id { get; set; }
 
-    public string? UserId { get; set; }
-
-    public Guid BrandId { get; set; }
+    public decimal? ActualAmount { get; set; }
 
     public decimal Amount { get; set; }
 
-    public decimal? ActualAmount { get; set; }
-
-    public Guid? BrandPaymentId { get; set; }
-
-    public int Status { get; set; }
-
-    public string? Remark { get; set; }
-
-    public Guid BankInfoId { get; set; }
+    public string? ApplyInfo { get; set; }
 
     public string BankInfo { get; set; } = null!;
 
-    public string? ApplyInfo { get; set; }
+    public Guid BankInfoId { get; set; }
 
-    public string? PaymentReturn { get; set; }
+    public Guid BrandId { get; set; }
+
+    public Guid? BrandPaymentId { get; set; }
 
     public DateTime CreatedOn { get; set; }
 
-    public DateTime UpdatedOn { get; set; }
+    public decimal HandlingFee { get; set; }
 
-    public string? UserName { get; set; }
+    public string? Note { get; set; }
 
-    public int UserType { get; set; }
-
-    public string? ThirdPartyOrderNo { get; set; }
-
-    public DateTime? ReviewedOn { get; set; }
-
-    public string? ReviewedUserId { get; set; }
-
-    public string? ReviewedUserName { get; set; }
+    public string? OrderNo { get; set; }
 
     public DateTime? PaidOn { get; set; }
 
@@ -53,11 +37,27 @@ public partial class WithdrawForm
 
     public string? PaidUserName { get; set; }
 
-    public string? OrderNo { get; set; }
+    public string? PaymentReturn { get; set; }
 
-    public string? Note { get; set; }
+    public string? Remark { get; set; }
 
-    public decimal HandlingFee { get; set; }
+    public DateTime? ReviewedOn { get; set; }
+
+    public string? ReviewedUserId { get; set; }
+
+    public string? ReviewedUserName { get; set; }
 
     public Guid? SnapshotEventId { get; set; }
+
+    public int Status { get; set; }
+
+    public string? ThirdPartyOrderNo { get; set; }
+
+    public DateTime UpdatedOn { get; set; }
+
+    public string? UserId { get; set; }
+
+    public string? UserName { get; set; }
+
+    public int UserType { get; set; }
 }

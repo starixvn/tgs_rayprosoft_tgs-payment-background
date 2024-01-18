@@ -1,4 +1,5 @@
-﻿using Tgs.Payment.Background.Protos;
+﻿using Tgs.Payment.Background.Models;
+using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
@@ -81,20 +82,5 @@ internal class FiveMinutesUserPaymentSummaryHandler(
 		}
 
 		cancellationToken.ThrowIfCancellationRequested();
-	}
-}
-
-file static class DateTimeExtensions
-{
-	public static DateTime CeilingFiveMinutesTime(this DateTime time)
-		=> time.FloorFiveMinutesTime().AddMinutes(5D);
-
-	public static DateTime FloorFiveMinutesTime(this DateTime time)
-	{
-		var floorMinutes = (int)Math.Floor(time.Minute / 5D) * 5;
-
-		var timePoint = new TimeOnly(time.Hour, floorMinutes);
-
-		return new DateTime(DateOnly.FromDateTime(time), timePoint, time.Kind);
 	}
 }

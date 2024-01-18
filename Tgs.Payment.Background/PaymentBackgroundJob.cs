@@ -1,5 +1,4 @@
-﻿using Google.Protobuf;
-using Tgs.Payment.Background.Protos;
+﻿using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background;
@@ -15,11 +14,9 @@ public class PaymentBackgroundJob(IMessageSender messageSender)
 			ProcessDate = processDate
 		};
 
-		var sendData = request.ToByteArray();
-
 		foreach (var subject in subjects)
 			await _messageSender
-				.SendAsync(subject, sendData)
+				.SendAsync(subject, request)
 				.ConfigureAwait(false);
 	}
 }

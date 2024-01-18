@@ -12,6 +12,7 @@ using OpenTelemetry.Trace;
 using Tgs.MessageQueue.Nats.Serializers;
 using Tgs.Payment.Background;
 using Tgs.Payment.Background.MessageQueue;
+using Tgs.Payment.Background.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 {
@@ -44,6 +45,8 @@ var builder = WebApplication.CreateBuilder(args);
 			.UseNpgsql("name=Tgs"));
 
 	_ = builder.Services
+		.AddEventBus(config => config
+			.RegisterEventSource<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName))
 		.AddKeyedSingleton(
 			"Nats",
 			(sp, _) => new NatsConnection(NatsOpts.Default with

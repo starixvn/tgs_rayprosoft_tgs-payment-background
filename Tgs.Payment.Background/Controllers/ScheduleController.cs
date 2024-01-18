@@ -51,4 +51,12 @@ public class ScheduleController : ControllerBase
 			processDate,
 			"tgs.payment.background.brand"));
 	}
+
+	[HttpPost("5min")]
+	[SuccessStatusCode(202)]
+	public void QueueFiveMinutesJobs(
+		DateTime processDate)
+	{
+
+	}
 }

@@ -1,8 +1,6 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using Tgs.Payment.Background.Repositories.Entities;
-using Tgs.Payment.Background.Repositories.Entities.Models;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Tgs.Payment.Background.Repositories;
 
@@ -1023,7 +1021,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		CancellationToken cancellationToken = default)
 	{
 		var inputSummaries = userPaymentSummaries
-			.Select(s => new FiveMinutesPaymentStatistics
+			.Select(s => new FiveMinutesPaymentStatistic
 			{
 				BrandId = s.BrandId,
 				UserType = (int)s.UserType,
@@ -1122,4 +1120,8 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 		_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
+
+	public ValueTask<DateTime?> GetUserHourLastProcessTimeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public ValueTask SetUserHourLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public ValueTask ProcessHourPaymentStatisticsAsync(DateTime processTime, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }

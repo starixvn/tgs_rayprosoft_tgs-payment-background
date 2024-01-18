@@ -6,15 +6,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
-using Tgs.Payment.Background.Repositories.Entities.Models;
 
 namespace Tgs.Payment.Background.Repositories.Entities;
 
 partial class TgsContext
 {
-	public virtual DbSet<FiveMinutesPaymentStatistics> FiveMinutesPaymentStatistics { get; set; }
-	public virtual DbSet<HourPaymentStatistics> HourPaymentStatistics { get; set; }
-
 	partial void OnModelCreatingPartial(ModelBuilder modelBuilder)
 	{
 		var dailydepositSummary = modelBuilder.Entity<DailyBrandDepositStatusSummary>();
@@ -41,8 +37,5 @@ partial class TgsContext
 		userPaymentSummaryStatistics.Property(u => u.FirstWithdrawAmount).HasColumnName("first_withdraw_amount");
 		userPaymentSummaryStatistics.Property(u => u.FirstWithdrawHandlingFee).HasColumnName("first_withdraw_handling_fee");
 		userPaymentSummaryStatistics.Property(u => u.FirstWithdrawOn).HasColumnName("first_withdraw_on");
-
-		modelBuilder.ApplyConfiguration(new Configurations.FiveMinutesPaymentStatisticsConfiguration());
-		modelBuilder.ApplyConfiguration(new Configurations.HourPaymentStatisticsConfiguration());
 	}
 }
