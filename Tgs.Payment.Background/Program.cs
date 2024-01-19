@@ -78,7 +78,6 @@ var builder = WebApplication.CreateBuilder(args);
 		{
 			c.SwaggerDoc("v1", new OpenApiInfo { Title = "PaymentBackgroundService", Version = "v1" });
 			c.ApplyWebApiToolkitSupport();
-			c.UseDateOnlyTimeOnlyStringConverters();
 		});
 
 	var excludeExtensions = new[] { "html", "ico", "png", "jpg" };

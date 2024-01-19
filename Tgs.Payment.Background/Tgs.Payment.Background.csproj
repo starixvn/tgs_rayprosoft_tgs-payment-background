@@ -15,8 +15,6 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DateOnlyTimeOnly.AspNet" Version="2.1.1" />
-		<PackageReference Include="DateOnlyTimeOnly.AspNet.Swashbuckle" Version="2.1.1" />
 		<PackageReference Include="FluentdForward.OpenTelemetry.MessagePack" Version="0.3.7" />
 		<PackageReference Include="Google.Protobuf" Version="3.25.2" />
 		<PackageReference Include="Grpc.Tools" Version="2.60.0">
@@ -35,8 +33,8 @@
 		<PackageReference Include="OpenTelemetry.Extensions.Hosting" Version="1.7.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.7.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.7.0" />
-		<PackageReference Include="PhoenixToolkits.MessageQueue.InProcess" Version="2.0.0" />
-		<PackageReference Include="PhoenixToolkits.MessageQueue.Nats" Version="2.0.1" />
+		<PackageReference Include="PhoenixToolkits.MessageQueue.InProcess" Version="2.0.1" />
+		<PackageReference Include="PhoenixToolkits.MessageQueue.Nats" Version="2.0.2" />
 		<PackageReference Include="PhoenixToolkits.Protobuf.ExtendTypes" Version="0.0.6" />
 		<PackageReference Include="ProfileViewer.OpenTelemetry.Exporter" Version="0.3.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
