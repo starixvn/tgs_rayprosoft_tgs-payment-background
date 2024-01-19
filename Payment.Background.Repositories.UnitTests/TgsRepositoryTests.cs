@@ -8,6 +8,7 @@ using Microsoft.Extensions.Logging.Abstractions;
 using Tgs.Payment.Background;
 using Tgs.Payment.Background.Repositories;
 using Tgs.Payment.Background.Repositories.Entities;
+using Xunit;
 
 namespace Payment.Background.Repositories.UnitTests;
 
@@ -46,6 +47,38 @@ public class TgsRepositoryTests
 	}
 
 	[Fact]
+	public async Task TgsRepository_取得前一個小時處理時間()
+	{
+		// Arrange
+		var dbContextOptions = new DbContextOptionsBuilder<TgsContext>()
+			.UseInMemoryDatabase(Guid.NewGuid().ToString())
+			.Options;
+
+		var dbContext = new TgsContext(dbContextOptions);
+
+		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+
+		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
+		var settingRow = new BackgroundPaymentStatisticsSetting
+		{
+			RecordKey = "HourUserPaymentSummary",
+			ProcessedTime = processTime
+		};
+
+		_ = await dbContext.BackgroundPaymentStatisticsSettings
+			.AddAsync(settingRow);
+
+		_ = await dbContext.SaveChangesAsync();
+
+		// Act
+		var actual = await sut.GetUserHourLastProcessTimeAsync();
+
+		// Assert
+		Assert.NotNull(actual);
+		Assert.Equal(processTime, actual);
+	}
+
+	[Fact]
 	public async Task TgsRepository_保存5分鐘資料匯總處理過的時間()
 	{
 		// Arrange
@@ -63,6 +96,30 @@ public class TgsRepositoryTests
 		await sut.SetUserFiveMinutesLastProcessTimeAsync(processTime);
 		var actualRow = await dbContext.BackgroundPaymentStatisticsSettings
 			.FindAsync("FiveMinutesUserPaymentSummary");
+
+		// Assert
+		Assert.NotNull(actualRow);
+		Assert.Equal(processTime, actualRow.ProcessedTime);
+	}
+
+	[Fact]
+	public async Task TgsRepository_保存每小時資料匯總處理過的時間()
+	{
+		// Arrange
+		var dbContextOptions = new DbContextOptionsBuilder<TgsContext>()
+			.UseInMemoryDatabase(Guid.NewGuid().ToString())
+			.Options;
+
+		var dbContext = new TgsContext(dbContextOptions);
+
+		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+
+		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
+
+		// Act
+		await sut.SetUserHourLastProcessTimeAsync(processTime);
+		var actualRow = await dbContext.BackgroundPaymentStatisticsSettings
+			.FindAsync("HourUserPaymentSummary");
 
 		// Assert
 		Assert.NotNull(actualRow);

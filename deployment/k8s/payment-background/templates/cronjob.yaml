@@ -21,4 +21,27 @@ spec:
             - POST
             - http://tgs-payment-background/schedule
           restartPolicy: OnFailure
-          
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: {{ include "payment-background.fullname" . }}-5min-scheduler
+spec:
+  schedule: '*/5 * * * *'
+  successfulJobsHistoryLimit: 1
+  failedJobsHistoryLimit: 2
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: payment-background-job
+            image: alpine/curl:8.4.0
+            imagePullPolicy: IfNotPresent
+            command:
+            - curl
+            - -X
+            - POST
+            - http://tgs-payment-background/schedule/5min
+          restartPolicy: OnFailure

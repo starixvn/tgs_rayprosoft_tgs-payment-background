@@ -10,6 +10,7 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 	private const string AgentDailyPaymentKey = "AgentDailyPayment";
 	private const string BrandDailyPaymentKey = "BrandDailyPayment";
 	private const string FiveMinutesPaymentKey = "FiveMinutesUserPaymentSummary";
+	private const string HourPaymentKey = "HourUserPaymentSummary";
 
 	public IAsyncEnumerable<string> ProcessPlayerDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default)
 	{
@@ -1121,7 +1122,31 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-	public ValueTask<DateTime?> GetUserHourLastProcessTimeAsync(CancellationToken cancellationToken = default) => throw new NotImplementedException();
-	public ValueTask SetUserHourLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public async ValueTask<DateTime?> GetUserHourLastProcessTimeAsync(CancellationToken cancellationToken = default)
+	{
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
+			.FindAsync([HourPaymentKey], cancellationToken: cancellationToken)
+			.ConfigureAwait(false);
+
+		return setting?.ProcessedTime.ToUniversalTime();
+	}
+
+	public async ValueTask SetUserHourLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default)
+	{
+		var setting = await tgsContext.BackgroundPaymentStatisticsSettings
+			.FindAsync([HourPaymentKey], cancellationToken: cancellationToken)
+			.ConfigureAwait(false)
+			?? (await tgsContext.BackgroundPaymentStatisticsSettings.AddAsync(
+				new BackgroundPaymentStatisticsSetting
+				{
+					RecordKey = HourPaymentKey
+				},
+				cancellationToken).ConfigureAwait(false)).Entity;
+
+		setting.ProcessedTime = newProcessTime.ToUniversalTime();
+
+		_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+	}
+
 	public ValueTask ProcessHourPaymentStatisticsAsync(DateTime processTime, CancellationToken cancellationToken = default) => throw new NotImplementedException();
 }
