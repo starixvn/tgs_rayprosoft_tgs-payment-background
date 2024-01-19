@@ -42,11 +42,12 @@ var builder = WebApplication.CreateBuilder(args);
 	_ = builder.Services
 		.AddPaymentBackground()
 		.AddPaymentBackgroundRepositories((_, dbOptions) => dbOptions
-			.UseNpgsql("name=Tgs"));
-
-	_ = builder.Services
+			.UseNpgsql("name=Tgs"))
 		.AddEventBus(config => config
 			.RegisterEventSource<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName))
+		.AddHostedService<BackgroundJobService>();
+
+	_ = builder.Services
 		.AddKeyedSingleton(
 			"Nats",
 			(sp, _) => new NatsConnection(NatsOpts.Default with
