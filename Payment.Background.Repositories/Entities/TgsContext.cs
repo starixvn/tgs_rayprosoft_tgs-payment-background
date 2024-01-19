@@ -22,6 +22,10 @@ public partial class TgsContext : DbContext
 
     public virtual DbSet<DepositForm> DepositForms { get; set; }
 
+    public virtual DbSet<FiveMinutesPaymentStatistic> FiveMinutesPaymentStatistics { get; set; }
+
+    public virtual DbSet<HourPaymentStatistic> HourPaymentStatistics { get; set; }
+
     public virtual DbSet<Player> Players { get; set; }
 
     public virtual DbSet<PlayerDailyPaymentStatistic> PlayerDailyPaymentStatistics { get; set; }
@@ -36,14 +40,16 @@ public partial class TgsContext : DbContext
             .HasPostgresExtension("ltree")
             .HasPostgresExtension("pg_trgm");
 
-            modelBuilder.ApplyConfiguration(new Configurations.AgentDailyPaymentStatisticConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.BackgroundPaymentStatisticsSettingConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.BrandDailyPaymentStatisticConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.DepositFormConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.PlayerConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.PlayerDailyPaymentStatisticConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.PlayerPaymentOverviewConfiguration());
-            modelBuilder.ApplyConfiguration(new Configurations.WithdrawFormConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.AgentDailyPaymentStatisticConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.BackgroundPaymentStatisticsSettingConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.BrandDailyPaymentStatisticConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.DepositFormConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.FiveMinutesPaymentStatisticConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.HourPaymentStatisticConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.PlayerConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.PlayerDailyPaymentStatisticConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.PlayerPaymentOverviewConfiguration());
+        modelBuilder.ApplyConfiguration(new Configurations.WithdrawFormConfiguration());
         OnModelCreatingPartial(modelBuilder);
     }
 

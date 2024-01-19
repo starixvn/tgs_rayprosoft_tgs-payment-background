@@ -14,6 +14,8 @@ public interface ITgsRepository
 
 	ValueTask ProcessAgentDailyPaymentStatisticsAsync(DateOnly processDate, CancellationToken cancellationToken = default);
 
+	ValueTask ProcessHourPaymentStatisticsAsync(DateTime processTime, CancellationToken cancellationToken = default);
+
 	ValueTask<DateOnly?> GetBrandDailyPaymentStatisticsLastProcessDateAsync(CancellationToken cancellationToken = default);
 
 	ValueTask SetBrandDailyPaymentStatisticsLastProcessDateAsync(DateOnly date, CancellationToken cancellationToken = default);
@@ -23,4 +25,22 @@ public interface ITgsRepository
 	ValueTask UpdatePlayerPaymentOverviewAsync(string playerCode, CancellationToken cancellationToken = default);
 
 	ValueTask UpdateAllPlayerPaymentOverviewAsync(CancellationToken cancellationToken = default);
+
+	ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default);
+
+	ValueTask<DateTime?> GetUserHourLastProcessTimeAsync(CancellationToken cancellationToken = default);
+
+	ValueTask SetUserFiveMinutesLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default);
+
+	ValueTask SetUserHourLastProcessTimeAsync(DateTime newProcessTime, CancellationToken cancellationToken = default);
+
+	IAsyncEnumerable<UserPaymentSummaryStatistics> QueryUserPaymentSummaryStatisticsAsync(
+		DateTime begin,
+		DateTime end,
+		CancellationToken cancellationToken = default);
+
+	ValueTask UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+		DateTime timeRange,
+		IEnumerable<UserPaymentSummaryStatistics> userPaymentSummaries,
+		CancellationToken cancellationToken = default);
 }

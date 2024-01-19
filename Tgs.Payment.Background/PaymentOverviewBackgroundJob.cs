@@ -1,5 +1,4 @@
-﻿using Google.Protobuf;
-using Valhalla.MessageQueue;
+﻿using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background;
 
@@ -12,7 +11,7 @@ public class PaymentOverviewBackgroundJob(IMessageSender messageSender)
 		var request = new Google.Protobuf.WellKnownTypes.Empty();
 
 		await _messageSender
-			.SendAsync("tgs.payment.background.payment-overview.all", request.ToByteArray())
+			.SendAsync("tgs.payment.background.payment-overview.all", request)
 			.ConfigureAwait(false);
 	}
 }

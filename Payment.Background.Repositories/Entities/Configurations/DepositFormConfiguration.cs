@@ -59,7 +59,9 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
             entity.Property(e => e.ReviewedUserId).HasColumnName("reviewed_user_id");
             entity.Property(e => e.ReviewedUserName).HasColumnName("reviewed_user_name");
             entity.Property(e => e.SnapshotEventId).HasColumnName("snapshot_event_id");
-            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.Status)
+            .HasDefaultValue(0)
+            .HasColumnName("status");
             entity.Property(e => e.ThirdPartyOrderNo).HasColumnName("third_party_order_no");
             entity.Property(e => e.UpdatedOn)
             .HasDefaultValueSql("now()")

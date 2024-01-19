@@ -1,6 +1,8 @@
 ﻿using Hangfire;
 using Microsoft.AspNetCore.Mvc;
+using Tgs.Payment.Background.Models;
 using Tgs.WebApi.Toolkits;
+using Valhalla.Messages;
 
 namespace Tgs.Payment.Background.Controllers;
 
@@ -50,5 +52,18 @@ public class ScheduleController : ControllerBase
 		_ = BackgroundJob.Enqueue<PaymentBackgroundJob>(job => job.ExecuteAsync(
 			processDate,
 			"tgs.payment.background.brand"));
+	}
+
+	[HttpPost("5min")]
+	[SuccessStatusCode(202)]
+	public async Task QueueFiveMinutesJobsAsync(
+		[FromServices] IEventBus eventBus,
+		DateTime? processDate)
+	{
+		var publisher = eventBus.GetEventPublisher<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!;
+
+		_ = await publisher.PublishAsync(
+			processDate ?? DateTime.UtcNow,
+			HttpContext.RequestAborted).ConfigureAwait(false);
 	}
 }

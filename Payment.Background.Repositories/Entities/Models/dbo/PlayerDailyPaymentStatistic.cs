@@ -15,35 +15,35 @@ public partial class PlayerDailyPaymentStatistic
 
     public int? DailyDepositCount { get; set; }
 
+    public decimal? DailyDepositHandlingFee { get; set; }
+
     public decimal? DailyWithdrawAmount { get; set; }
 
     public int? DailyWithdrawCount { get; set; }
 
-    public decimal? TotalDepositAmount { get; set; }
-
-    public int? TotalDepositCount { get; set; }
-
-    public decimal? TotalWithdrawAmount { get; set; }
-
-    public int? TotalWithdrawCount { get; set; }
-
-    public DateTime? FirstDepositOn { get; set; }
+    public decimal? DailyWithdrawHandlingFee { get; set; }
 
     public decimal? FirstDepositAmount { get; set; }
 
-    public decimal? DailyDepositHandlingFee { get; set; }
-
-    public decimal? DailyWithdrawHandlingFee { get; set; }
-
     public decimal? FirstDepositHandlingFee { get; set; }
 
-    public decimal? TotalDepositHandlingFee { get; set; }
-
-    public decimal? TotalWithdrawHandlingFee { get; set; }
+    public DateTime? FirstDepositOn { get; set; }
 
     public decimal? FirstWithdrawAmount { get; set; }
 
     public decimal? FirstWithdrawHandlingFee { get; set; }
 
     public DateTime? FirstWithdrawOn { get; set; }
+
+    public decimal? TotalDepositAmount { get; set; }
+
+    public int? TotalDepositCount { get; set; }
+
+    public decimal? TotalDepositHandlingFee { get; set; }
+
+    public decimal? TotalWithdrawAmount { get; set; }
+
+    public int? TotalWithdrawCount { get; set; }
+
+    public decimal? TotalWithdrawHandlingFee { get; set; }
 }
