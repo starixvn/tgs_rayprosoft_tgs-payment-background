@@ -7,22 +7,32 @@ using Valhalla.Messages;
 
 namespace Tgs.Payment.Background.Models;
 
-public class BackgroundJobService(IEventBus eventBus, IMessageSender messageSender) : BackgroundService
+public class BackgroundJobService(
+	IEventBus eventBus,
+	IMessageSender messageSender,
+	ILogger<BackgroundJobService> logger) : BackgroundService
 {
 	protected override Task ExecuteAsync(CancellationToken stoppingToken)
 		=> eventBus.GetEventObserable<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!
 			.Select(time => time.ToUniversalTime().FloorFiveMinutesTime())
 			.Select(time => Observable.FromAsync(async () =>
 			{
-				var request = new FiveMinuteProcessRequest
+				try
 				{
-					ProcessDate = Timestamp.FromDateTime(time)
-				};
+					var request = new FiveMinuteProcessRequest
+					{
+						ProcessDate = Timestamp.FromDateTime(time)
+					};
 
-				await messageSender.SendAsync(
-					"tgs.payment.background.5min",
-					request,
-					stoppingToken).ConfigureAwait(false);
+					await messageSender.SendAsync(
+						"tgs.payment.background.5min",
+						request,
+						stoppingToken).ConfigureAwait(false);
+				}
+				catch (Exception ex)
+				{
+					logger.LogError(ex, "Error occur.");
+				}
 			}))
 			.Merge()
 			.ToTask(stoppingToken);
