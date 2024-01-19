@@ -34,7 +34,7 @@
 		<PackageReference Include="OpenTelemetry.Instrumentation.AspNetCore" Version="1.7.0" />
 		<PackageReference Include="OpenTelemetry.Instrumentation.Runtime" Version="1.7.0" />
 		<PackageReference Include="PhoenixToolkits.MessageQueue.InProcess" Version="2.1.0" />
-		<PackageReference Include="PhoenixToolkits.MessageQueue.Nats" Version="2.1.0" />
+		<PackageReference Include="PhoenixToolkits.MessageQueue.Nats" Version="2.1.1" />
 		<PackageReference Include="PhoenixToolkits.Protobuf.ExtendTypes" Version="0.0.6" />
 		<PackageReference Include="ProfileViewer.OpenTelemetry.Exporter" Version="0.3.1" />
 		<PackageReference Include="Swashbuckle.AspNetCore" Version="6.5.0" />
