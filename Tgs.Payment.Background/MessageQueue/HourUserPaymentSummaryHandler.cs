@@ -1,5 +1,4 @@
-﻿using Tgs.Payment.Background.Models;
-using Tgs.Payment.Background.Protos;
+﻿using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
@@ -12,11 +11,11 @@ public class HourUserPaymentSummaryHandler(ITgsRepository tgsRepository) : IMess
 		IEnumerable<MessageHeaderValue>? headerValues,
 		CancellationToken cancellationToken = default)
 	{
-		var processTime = data.ProcessDate.ToDateTime();
+		var processTime = data.ProcessDate.ToDateTime().FloorHourTime();
 
 		var previousTime = await tgsRepository.GetUserHourLastProcessTimeAsync(
 			cancellationToken).ConfigureAwait(false)
-			?? processTime.AddHours(-2D).CeilingHourTime();
+			?? processTime.AddHours(-1D);
 
 		if (processTime > previousTime)
 		{
@@ -24,7 +23,7 @@ public class HourUserPaymentSummaryHandler(ITgsRepository tgsRepository) : IMess
 			foreach (var nextTimePoint in EachProcessTimePoints(previousTime, processTime, cancellationToken))
 			{
 				await tgsRepository.ProcessHourPaymentStatisticsAsync(
-					nextTimePoint,
+					lastProcessTime,
 					cancellationToken).ConfigureAwait(false);
 
 				lastProcessTime = nextTimePoint;
@@ -36,12 +35,12 @@ public class HourUserPaymentSummaryHandler(ITgsRepository tgsRepository) : IMess
 		}
 		else
 		{
-			var start = processTime.FloorFiveMinutesTime();
+			var start = processTime.AddHours(1D);
 
 			foreach (var nextTimePoint in EachProcessTimePoints(start, previousTime, cancellationToken))
 			{
 				await tgsRepository.ProcessHourPaymentStatisticsAsync(
-					nextTimePoint,
+					start,
 					cancellationToken).ConfigureAwait(false);
 
 				start = nextTimePoint;

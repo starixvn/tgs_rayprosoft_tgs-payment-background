@@ -4,6 +4,7 @@ using Google.Protobuf.WellKnownTypes;
 using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 using Valhalla.Messages;
+using Tgs.Payment.Background;
 
 namespace Tgs.Payment.Background.Models;
 
