@@ -60,10 +60,34 @@ public class ScheduleController : ControllerBase
 		[FromServices] IEventBus eventBus,
 		DateTime? processDate)
 	{
-		var publisher = eventBus.GetEventPublisher<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!;
+		if (processDate is null)
+		{
+			var publisher = eventBus.GetEventPublisher<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!;
+
+			_ = await publisher.PublishAsync(
+				DateTime.UtcNow,
+				HttpContext.RequestAborted).ConfigureAwait(false);
+		}
+		else
+		{
+			var publisher = eventBus.GetEventPublisher<DateTime>(BackgroundMessageConsts.RerunFiveMinutesBackgroundChannelName)!;
+
+			_ = await publisher.PublishAsync(
+				processDate.Value,
+				HttpContext.RequestAborted).ConfigureAwait(false);
+		}
+	}
+
+	[HttpPost("hour")]
+	[SuccessStatusCode(202)]
+	public async Task QueueHourJobsAsync(
+		[FromServices] IEventBus eventBus,
+		DateTime processDate)
+	{
+		var publisher = eventBus.GetEventPublisher<DateTime>(BackgroundMessageConsts.RerunHourBackgroundChannelName)!;
 
 		_ = await publisher.PublishAsync(
-			processDate ?? DateTime.UtcNow,
+			processDate,
 			HttpContext.RequestAborted).ConfigureAwait(false);
 	}
 }

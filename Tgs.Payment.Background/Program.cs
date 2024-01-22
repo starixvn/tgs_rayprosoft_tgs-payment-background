@@ -44,7 +44,9 @@ var builder = WebApplication.CreateBuilder(args);
 		.AddPaymentBackgroundRepositories((_, dbOptions) => dbOptions
 			.UseNpgsql("name=Tgs"))
 		.AddEventBus(config => config
-			.RegisterEventSource<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName))
+			.RegisterEventSource<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)
+			.RegisterEventSource<DateTime>(BackgroundMessageConsts.RerunFiveMinutesBackgroundChannelName)
+			.RegisterEventSource<DateTime>(BackgroundMessageConsts.RerunHourBackgroundChannelName))
 		.AddHostedService<BackgroundJobService>();
 
 	_ = builder.Services

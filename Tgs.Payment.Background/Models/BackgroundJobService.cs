@@ -1,4 +1,5 @@
-﻿using System.Reactive.Linq;
+﻿using System.Reactive;
+using System.Reactive.Linq;
 using System.Reactive.Threading.Tasks;
 using Google.Protobuf.WellKnownTypes;
 using Tgs.Payment.Background.Protos;
@@ -13,11 +14,11 @@ public class BackgroundJobService(
 	ILogger<BackgroundJobService> logger) : BackgroundService
 {
 	protected override Task ExecuteAsync(CancellationToken stoppingToken)
-		=> eventBus.GetEventObserable<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!
+	{
+		var fiveMinutesTask = eventBus.GetEventObserable<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!
 			.Select(time => time.ToUniversalTime().FloorFiveMinutesTime())
-			.Select(time => Observable.FromAsync(async () =>
-			{
-				try
+			.Select(time => Observable
+				.FromAsync(async () =>
 				{
 					var request = new FiveMinuteProcessRequest
 					{
@@ -34,12 +35,64 @@ public class BackgroundJobService(
 							"tgs.payment.background.hour",
 							request,
 							stoppingToken).ConfigureAwait(false);
-				}
-				catch (Exception ex)
+				})
+				.Catch((Exception ex) =>
 				{
 					logger.LogError(ex, "Error occur.");
-				}
-			}))
+
+					return Observable.Empty<Unit>();
+				}))
 			.Merge()
 			.ToTask(stoppingToken);
+
+		var rerunFiveMinutesTask = eventBus.GetEventObserable<DateTime>(BackgroundMessageConsts.RerunFiveMinutesBackgroundChannelName)!
+			.Select(time => time.ToUniversalTime())
+			.Select(time => Observable
+				.FromAsync(async () =>
+				{
+					var request = new FiveMinuteProcessRequest
+					{
+						ProcessDate = Timestamp.FromDateTime(time)
+					};
+
+					await messageSender.SendAsync(
+						"tgs.payment.background.5min",
+						request,
+						stoppingToken).ConfigureAwait(false);
+				})
+				.Catch((Exception ex) =>
+				{
+					logger.LogError(ex, "Rerun 5min failed.");
+
+					return Observable.Empty<Unit>();
+				}))
+			.Merge()
+			.ToTask(stoppingToken);
+
+		var rerunHourTask = eventBus.GetEventObserable<DateTime>(BackgroundMessageConsts.RerunHourBackgroundChannelName)!
+			.Select(time => time.ToUniversalTime())
+			.Select(time => Observable
+				.FromAsync(async () =>
+				{
+					var request = new FiveMinuteProcessRequest
+					{
+						ProcessDate = Timestamp.FromDateTime(time)
+					};
+
+					await messageSender.SendAsync(
+						"tgs.payment.background.hour",
+						request,
+						stoppingToken).ConfigureAwait(false);
+				})
+				.Catch((Exception ex) =>
+				{
+					logger.LogError(ex, "Rerun hour failed.");
+
+					return Observable.Empty<Unit>();
+				}))
+			.Merge()
+			.ToTask(stoppingToken);
+
+		return Task.WhenAll(fiveMinutesTask, rerunFiveMinutesTask, rerunHourTask);
+	}
 }
