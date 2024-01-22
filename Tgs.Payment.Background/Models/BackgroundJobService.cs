@@ -4,7 +4,6 @@ using Google.Protobuf.WellKnownTypes;
 using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 using Valhalla.Messages;
-using Tgs.Payment.Background;
 
 namespace Tgs.Payment.Background.Models;
 
@@ -29,6 +28,12 @@ public class BackgroundJobService(
 						"tgs.payment.background.5min",
 						request,
 						stoppingToken).ConfigureAwait(false);
+
+					if (time.Minute == 5)
+						await messageSender.SendAsync(
+							"tgs.payment.background.hour",
+							request,
+							stoppingToken).ConfigureAwait(false);
 				}
 				catch (Exception ex)
 				{

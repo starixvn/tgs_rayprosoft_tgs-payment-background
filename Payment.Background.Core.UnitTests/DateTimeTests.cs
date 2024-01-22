@@ -1,5 +1,4 @@
 ﻿using Tgs.Payment.Background;
-using Xunit;
 
 namespace Payment.Background.Core.UnitTests;
 
