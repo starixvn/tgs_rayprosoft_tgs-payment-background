@@ -29,6 +29,14 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 			.QueryUserPaymentSummaryStatisticsAsync(
 				Arg.Any<DateTime>(),
 				Arg.Any<DateTime>());
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Any<DateTime>(),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-17T09:50:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
 		_ = fakeTgsRepository.SetUserFiveMinutesLastProcessTimeAsync(
 			Arg.Is(DateTime.ParseExact("2024-01-17T09:55:00.0000000Z", "o", null).ToUniversalTime()));
 	}
@@ -50,6 +58,10 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 
 		await sut.HandleAsync("test", request, null);
 
+		_ = fakeTgsRepository.Received(2)
+			.QueryUserPaymentSummaryStatisticsAsync(
+				Arg.Any<DateTime>(),
+				Arg.Any<DateTime>());
 		_ = fakeTgsRepository.Received(1)
 			.QueryUserPaymentSummaryStatisticsAsync(
 				Arg.Is(DateTime.ParseExact("2024-01-17T09:45:00.0000000Z", "o", null).ToUniversalTime()),
@@ -59,9 +71,17 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 				Arg.Is(DateTime.ParseExact("2024-01-17T09:50:00.0000000Z", "o", null).ToUniversalTime()),
 				Arg.Is(DateTime.ParseExact("2024-01-17T09:55:00.0000000Z", "o", null).ToUniversalTime()));
 		_ = fakeTgsRepository.Received(2)
-			.QueryUserPaymentSummaryStatisticsAsync(
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
 				Arg.Any<DateTime>(),
-				Arg.Any<DateTime>());
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-17T09:45:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-17T09:50:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
 		_ = fakeTgsRepository.SetUserFiveMinutesLastProcessTimeAsync(
 			Arg.Is(DateTime.ParseExact("2024-01-17T09:55:00.0000000Z", "o", null).ToUniversalTime()));
 	}
@@ -83,6 +103,10 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 
 		await sut.HandleAsync("test", request, null);
 
+		_ = fakeTgsRepository.Received(2)
+			.QueryUserPaymentSummaryStatisticsAsync(
+				Arg.Any<DateTime>(),
+				Arg.Any<DateTime>());
 		_ = fakeTgsRepository.Received(1)
 			.QueryUserPaymentSummaryStatisticsAsync(
 				Arg.Is(DateTime.ParseExact("2024-01-17T09:45:00.0000000Z", "o", null).ToUniversalTime()),
@@ -92,9 +116,17 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 				Arg.Is(DateTime.ParseExact("2024-01-17T09:50:00.0000000Z", "o", null).ToUniversalTime()),
 				Arg.Is(DateTime.ParseExact("2024-01-17T09:55:00.0000000Z", "o", null).ToUniversalTime()));
 		_ = fakeTgsRepository.Received(2)
-			.QueryUserPaymentSummaryStatisticsAsync(
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
 				Arg.Any<DateTime>(),
-				Arg.Any<DateTime>());
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-17T09:45:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-17T09:50:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
 	}
 
 	[TestMethod]
@@ -113,13 +145,18 @@ public class FiveMinutesUserPaymentSummaryHandlerTests
 
 		_ = fakeTgsRepository.Received(1)
 			.QueryUserPaymentSummaryStatisticsAsync(
-				Arg.Is(DateTime.ParseExact("2024-01-18T15:55:00.0000000Z", "o", null).ToUniversalTime()),
-				Arg.Is(DateTime.ParseExact("2024-01-18T16:00:00.0000000Z", "o", null).ToUniversalTime()));
+				Arg.Is(DateTime.ParseExact("2024-01-18T15:50:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Is(DateTime.ParseExact("2024-01-18T15:55:00.0000000Z", "o", null).ToUniversalTime()));
+		_ = fakeTgsRepository.Received(1)
+			.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-18T15:50:00.0000000Z", "o", null).ToUniversalTime()),
+				Arg.Any<IEnumerable<UserPaymentSummaryStatistics>>());
 		_ = fakeTgsRepository.Received(1)
 			.QueryUserPaymentSummaryStatisticsAsync(
 				Arg.Any<DateTime>(),
 				Arg.Any<DateTime>());
-		_ = fakeTgsRepository.SetUserFiveMinutesLastProcessTimeAsync(
-			Arg.Is(DateTime.ParseExact("2024-01-18T16:00:00.0000000Z", "o", null).ToUniversalTime()));
+		_ = fakeTgsRepository.Received(1)
+			.SetUserFiveMinutesLastProcessTimeAsync(
+				Arg.Is(DateTime.ParseExact("2024-01-18T15:55:00.0000000Z", "o", null).ToUniversalTime()));
 	}
 }

@@ -1091,9 +1091,8 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 
 		tgsContext.FiveMinutesPaymentStatistics.RemoveRange(rightJoin);
 
-		_ = await tgsContext
-			.SaveChangesAsync(cancellationToken)
-			.ConfigureAwait(false);
+		_ = await tgsContext.SaveChangesAsync(
+			cancellationToken).ConfigureAwait(false);
 	}
 
 	public async ValueTask<DateTime?> GetUserFiveMinutesLastProcessTimeAsync(CancellationToken cancellationToken = default)
@@ -1148,5 +1147,198 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 		_ = await tgsContext.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
 	}
 
-	public ValueTask ProcessHourPaymentStatisticsAsync(DateTime processTime, CancellationToken cancellationToken = default) => throw new NotImplementedException();
+	public async ValueTask ProcessHourPaymentStatisticsAsync(DateTime processTime, CancellationToken cancellationToken = default)
+	{
+		var begin = processTime.ToUniversalTime();
+		var end = processTime.AddHours(1D);
+
+		var inputSummaries = await tgsContext.Set<UserPaymentSummaryStatistics>()
+			.FromSqlInterpolated($"""
+				with DepositStatistics
+				AS
+				(
+					SELECT
+						user_id,
+						user_type,
+						brand_id,
+						deposit_amount,
+						deposit_count,
+						deposit_handling_fee,
+						first_value(first_deposit_amount) OVER w AS "first_deposit_amount",
+						first_value(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
+						first_value(first_deposit_on) OVER w AS "first_deposit_on"
+					FROM
+						dbo.five_minutes_payment_statistics
+					WHERE
+						deposit_amount IS NOT NULL
+						AND
+						time_point >= {begin}
+						AND
+						time_point < {end}
+					WINDOW w AS (PARTITION BY user_id, user_type ORDER BY time_point)
+				),
+				WithdrawStatistics
+				AS
+				(
+					SELECT DISTINCT
+						user_id,
+						user_type,
+						brand_id,
+						withdraw_amount,
+						withdraw_count,
+						withdraw_handling_fee,
+						first_value(first_withdraw_amount) OVER w AS "first_withdraw_amount",
+						first_value(first_withdraw_handling_fee) OVER w AS "first_withdraw_handling_fee",
+						first_value(first_withdraw_on) OVER w AS "first_withdraw_on"
+					FROM
+						dbo.five_minutes_payment_statistics
+					WHERE
+						withdraw_amount IS NOT NULL
+						AND
+						time_point >= {begin}
+						AND
+						time_point < {end}
+					WINDOW w AS (PARTITION BY user_id, user_type ORDER BY time_point)
+				)
+				SELECT
+					COALESCE(DS.user_type, WS.user_type) AS "user_type",
+					COALESCE(DS.user_id, WS.user_id) AS "user_id",
+					COALESCE(DS.brand_id, WS.brand_id) AS "brand_id",
+					DS.deposit_amount,
+					DS.deposit_count,
+					DS.deposit_handling_fee,
+					DS.first_deposit_on,
+					DS.first_deposit_amount,
+					DS.first_deposit_handling_fee,
+					WS.withdraw_amount,
+					WS.withdraw_count,
+					WS.withdraw_handling_fee,
+					WS.first_withdraw_on,
+					WS.first_withdraw_amount,
+					WS.first_withdraw_handling_fee
+				FROM
+					(
+						SELECT
+							user_type,
+							user_id,
+							brand_id,
+							sum(deposit_amount) AS "deposit_amount",
+							sum(deposit_count) AS "deposit_count",
+							sum(deposit_handling_fee) AS "deposit_handling_fee",
+							min(first_deposit_on) AS "first_deposit_on",
+							min(first_deposit_amount) AS "first_deposit_amount",
+							min(first_deposit_handling_fee) AS "first_deposit_handling_fee"
+						FROM
+							DepositStatistics
+						GROUP BY
+							user_type,
+							user_id,
+							brand_id
+					) AS DS
+					FULL OUTER JOIN
+					(
+						SELECT
+							user_type,
+							user_id,
+							brand_id,
+							sum(withdraw_amount) AS "withdraw_amount",
+							sum(withdraw_count) AS "withdraw_count",
+							sum(withdraw_handling_fee) AS "withdraw_handling_fee",
+							min(first_withdraw_on) AS "first_withdraw_on",
+							min(first_withdraw_amount) AS "first_withdraw_amount",
+							min(first_withdraw_handling_fee) AS "first_withdraw_handling_fee"
+						FROM
+							WithdrawStatistics
+						GROUP BY
+							user_type,
+							user_id,
+							brand_id
+					) AS WS ON DS.user_id = WS.user_id
+						AND DS.user_type = WS.user_type
+						AND DS.brand_id = WS.brand_id
+				""")
+			.AsNoTracking()
+			.ToArrayAsync(cancellationToken)
+			.ToAsyncEnumerable()
+			.SelectMany(arr => arr.ToAsyncEnumerable())
+			.Select(s => new HourPaymentStatistic
+			{
+				BrandId = s.BrandId,
+				UserType = (int)s.UserType,
+				UserId = s.UserId,
+				TimePoint = begin,
+				DepositAmount = s.DepositAmount,
+				DepositCount = s.DepositCount,
+				DepositHandlingFee = s.DepositHandlingFee,
+				FirstDepositAmount = s.FirstDepositAmount,
+				FirstDepositHandlingFee = s.FirstDepositHandlingFee,
+				FirstDepositOn = s.FirstDepositOn,
+				FirstWithdrawAmount = s.FirstWithdrawAmount,
+				FirstWithdrawHandlingFee = s.FirstWithdrawHandlingFee,
+				FirstWithdrawOn = s.FirstWithdrawOn,
+				WithdrawAmount = s.WithdrawAmount,
+				WithdrawCount = s.WithdrawCount,
+				WithdrawHandlingFee = s.WithdrawHandlingFee
+			})
+			.ToArrayAsync(cancellationToken)
+			.ConfigureAwait(false);
+
+		var originSummaries = await tgsContext.HourPaymentStatistics
+			.Where(row => row.TimePoint == begin)
+			.ToArrayAsync(cancellationToken)
+			.ConfigureAwait(false);
+
+		var leftJoin = from input in inputSummaries
+					   join db in originSummaries
+						on new { input.TimePoint, input.UserId, input.UserType, input.BrandId }
+							equals new { db.TimePoint, db.UserId, db.UserType, db.BrandId } into g
+					   from db in g.DefaultIfEmpty()
+					   select new
+					   {
+						   Input = input,
+						   Db = db
+					   };
+
+		var rightJoin = from db in originSummaries
+						join input in inputSummaries
+							on new { db.TimePoint, db.UserId, db.UserType, db.BrandId }
+								equals new { input.TimePoint, input.UserId, input.UserType, input.BrandId } into g
+						from input in g.DefaultIfEmpty()
+						where input is null
+						select db;
+
+		try
+		{
+			foreach (var p in leftJoin)
+				if (p.Db is not null)
+				{
+					var modifyRow = p.Db;
+					modifyRow.DepositAmount = p.Input.DepositAmount;
+					modifyRow.DepositCount = p.Input.DepositCount;
+					modifyRow.DepositHandlingFee = p.Input.DepositHandlingFee;
+					modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
+					modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
+					modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
+					modifyRow.WithdrawAmount = p.Input.WithdrawAmount;
+					modifyRow.WithdrawCount = p.Input.WithdrawCount;
+					modifyRow.WithdrawHandlingFee = p.Input.WithdrawHandlingFee;
+					modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
+					modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
+					modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
+				}
+				else
+					_ = await tgsContext.HourPaymentStatistics
+						.AddAsync(p.Input, cancellationToken)
+						.ConfigureAwait(false);
+		}
+		catch (Exception ex)
+		{
+			throw;
+		}
+
+		tgsContext.HourPaymentStatistics.RemoveRange(rightJoin);
+
+		_ = await tgsContext.SaveChangesAsync(
+			cancellationToken).ConfigureAwait(false);
+	}
 }

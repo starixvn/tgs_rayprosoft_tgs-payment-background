@@ -1,5 +1,4 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
-using NSubstitute;
 using Valhalla.Messages;
 
 namespace Tgs.Payment.Background.IntegrationTests;

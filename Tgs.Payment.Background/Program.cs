@@ -64,7 +64,8 @@ var builder = WebApplication.CreateBuilder(args);
 			.AddHandler<RefreshAllPlayerPaymentOverviewHandler>(
 				"tgs.payment.background.payment-overview.all",
 				"tgs.payment.background.payment-overview.all")
-			.AddReplyHandler<FiveMinutesUserPaymentSummaryHandler>("tgs.payment.background.5min", "tgs.payment.background.5min"))
+			.AddReplyHandler<FiveMinutesUserPaymentSummaryHandler>("tgs.payment.background.5min", "tgs.payment.background.5min")
+			.AddReplyHandler<HourUserPaymentSummaryHandler>("tgs.payment.background.hour", "tgs.payment.background.hour"))
 		.AddNatsGlobPatternExchange("*");
 
 	_ = builder.Services

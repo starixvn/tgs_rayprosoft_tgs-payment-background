@@ -1,5 +1,4 @@
-﻿using Tgs.Payment.Background.Models;
-using Tgs.Payment.Background.Protos;
+﻿using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
@@ -14,11 +13,11 @@ internal class FiveMinutesUserPaymentSummaryHandler(
 		IEnumerable<MessageHeaderValue>? headerValues,
 		CancellationToken cancellationToken = default)
 	{
-		var processTime = data.ProcessDate.ToDateTimeOffset().UtcDateTime;
+		var processTime = data.ProcessDate.ToDateTimeOffset().UtcDateTime.FloorFiveMinutesTime();
 
 		var previousTime = await tgsRepository.GetUserFiveMinutesLastProcessTimeAsync(
 			cancellationToken).ConfigureAwait(false)
-			?? processTime.AddMinutes(-10D).CeilingFiveMinutesTime();
+			?? processTime.AddMinutes(-5D);
 
 		if (processTime > previousTime)
 		{
@@ -33,7 +32,7 @@ internal class FiveMinutesUserPaymentSummaryHandler(
 					.ConfigureAwait(false);
 
 				await tgsRepository.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
-					nextTimePoint,
+					lastProcessTime,
 					summaries,
 					cancellationToken).ConfigureAwait(false);
 
@@ -46,7 +45,7 @@ internal class FiveMinutesUserPaymentSummaryHandler(
 		}
 		else
 		{
-			var start = processTime.FloorFiveMinutesTime();
+			var start = processTime.AddMinutes(5D);
 
 			foreach (var nextTimePoint in EachProcessTimePoints(start, previousTime, cancellationToken))
 			{
@@ -58,7 +57,7 @@ internal class FiveMinutesUserPaymentSummaryHandler(
 					.ConfigureAwait(false);
 
 				await tgsRepository.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
-					nextTimePoint,
+					start,
 					summaries,
 					cancellationToken).ConfigureAwait(false);
 

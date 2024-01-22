@@ -24,7 +24,7 @@ public class HourUserPaymentSummaryHandlerTests
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessHourPaymentStatisticsAsync(
-				Arg.Is(DateTime.ParseExact("2024-01-17T09:00:00.0000000Z", "o", null).ToUniversalTime()));
+				Arg.Is(DateTime.ParseExact("2024-01-17T08:00:00.0000000Z", "o", null).ToUniversalTime()));
 
 		_ = fakeTgsRepository.SetUserHourLastProcessTimeAsync(
 			Arg.Is(DateTime.ParseExact("2024-01-17T09:00:00.0000000Z", "o", null).ToUniversalTime()));
@@ -37,7 +37,7 @@ public class HourUserPaymentSummaryHandlerTests
 
 		var sut = new HourUserPaymentSummaryHandler(fakeTgsRepository);
 
-		var processDate = DateTime.ParseExact("2024-01-17T09:56:00.0000000Z", "o", null).ToUniversalTime();
+		var processDate = DateTime.ParseExact("2024-01-17T09:00:00.0000000Z", "o", null).ToUniversalTime();
 		var request = new FiveMinuteProcessRequest
 		{
 			ProcessDate = Timestamp.FromDateTime(processDate)
@@ -50,14 +50,10 @@ public class HourUserPaymentSummaryHandlerTests
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessHourPaymentStatisticsAsync(
-				Arg.Is(DateTime.ParseExact("2024-01-17T08:00:00.0000000Z", "o", null).ToUniversalTime()));
-
-		_ = fakeTgsRepository.Received(1)
-			.ProcessHourPaymentStatisticsAsync(
-				Arg.Is(DateTime.ParseExact("2024-01-17T09:00:00.0000000Z", "o", null).ToUniversalTime()));
+				Arg.Is(DateTime.ParseExact("2024-01-17T07:00:00.0000000Z", "o", null).ToUniversalTime()));
 
 		_ = fakeTgsRepository.SetUserHourLastProcessTimeAsync(
-			Arg.Is(DateTime.ParseExact("2024-01-17T09:00:00.0000000Z", "o", null).ToUniversalTime()));
+			Arg.Is(DateTime.ParseExact("2024-01-17T08:00:00.0000000Z", "o", null).ToUniversalTime()));
 	}
 
 	[TestMethod]
@@ -80,6 +76,6 @@ public class HourUserPaymentSummaryHandlerTests
 
 		_ = fakeTgsRepository.Received(1)
 			.ProcessHourPaymentStatisticsAsync(
-				Arg.Is(DateTime.ParseExact("2024-01-17T09:00:00.0000000Z", "o", null).ToUniversalTime()));
+				Arg.Is(DateTime.ParseExact("2024-01-17T08:00:00.0000000Z", "o", null).ToUniversalTime()));
 	}
 }

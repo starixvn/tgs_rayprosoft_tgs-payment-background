@@ -1,5 +1,4 @@
 ﻿using Google.Protobuf;
-using NSubstitute;
 using Tgs.Payment.Background.MessageQueue;
 using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;

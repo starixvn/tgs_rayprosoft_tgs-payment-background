@@ -1,6 +1,5 @@
 ﻿using Google.Protobuf;
 using Microsoft.Extensions.Logging.Abstractions;
-using NSubstitute;
 using Tgs.Payment.Background.MessageQueue;
 using Tgs.Payment.Background.Protos;
 using Valhalla.Messages;
