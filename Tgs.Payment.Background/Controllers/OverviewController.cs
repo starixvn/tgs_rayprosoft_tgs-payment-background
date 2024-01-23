@@ -4,7 +4,7 @@ using Tgs.WebApi.Toolkits;
 
 namespace Tgs.Payment.Background.Controllers;
 
-[Route("api/[controller]")]
+[Route("[controller]")]
 [ApiController]
 public class OverviewController : ControllerBase
 {

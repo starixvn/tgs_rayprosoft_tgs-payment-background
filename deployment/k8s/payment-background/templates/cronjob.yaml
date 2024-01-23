@@ -27,7 +27,7 @@ kind: CronJob
 metadata:
   name: {{ include "payment-background.fullname" . }}-5min-scheduler
 spec:
-  schedule: '*/5 * * * *'
+  schedule: '1-59/5 * * * *'
   successfulJobsHistoryLimit: 1
   failedJobsHistoryLimit: 2
   concurrencyPolicy: Forbid
