@@ -16,7 +16,7 @@ public class BackgroundJobService(
 	protected override Task ExecuteAsync(CancellationToken stoppingToken)
 	{
 		var fiveMinutesTask = eventBus.GetEventObserable<DateTime>(BackgroundMessageConsts.FiveMinutesBackgroundChannelName)!
-			.Select(time => time.ToUniversalTime().FloorFiveMinutesTime())
+			.Select(time => time.ToUniversalTime())
 			.Select(time => Observable
 				.FromAsync(async () =>
 				{
@@ -30,7 +30,7 @@ public class BackgroundJobService(
 						request,
 						stoppingToken).ConfigureAwait(false);
 
-					if (time.Minute == 5)
+					if (time.FloorFiveMinutesTime().Minute == 5)
 						await messageSender.SendAsync(
 							"tgs.payment.background.hour",
 							request,
