@@ -1307,34 +1307,27 @@ internal class TgsRepository(TgsContext tgsContext, ILogger<TgsRepository> logge
 						where input is null
 						select db;
 
-		try
-		{
-			foreach (var p in leftJoin)
-				if (p.Db is not null)
-				{
-					var modifyRow = p.Db;
-					modifyRow.DepositAmount = p.Input.DepositAmount;
-					modifyRow.DepositCount = p.Input.DepositCount;
-					modifyRow.DepositHandlingFee = p.Input.DepositHandlingFee;
-					modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
-					modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
-					modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
-					modifyRow.WithdrawAmount = p.Input.WithdrawAmount;
-					modifyRow.WithdrawCount = p.Input.WithdrawCount;
-					modifyRow.WithdrawHandlingFee = p.Input.WithdrawHandlingFee;
-					modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
-					modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
-					modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
-				}
-				else
-					_ = await tgsContext.HourPaymentStatistics
-						.AddAsync(p.Input, cancellationToken)
-						.ConfigureAwait(false);
-		}
-		catch (Exception ex)
-		{
-			throw;
-		}
+		foreach (var p in leftJoin)
+			if (p.Db is not null)
+			{
+				var modifyRow = p.Db;
+				modifyRow.DepositAmount = p.Input.DepositAmount;
+				modifyRow.DepositCount = p.Input.DepositCount;
+				modifyRow.DepositHandlingFee = p.Input.DepositHandlingFee;
+				modifyRow.FirstDepositHandlingFee = p.Input.FirstDepositHandlingFee;
+				modifyRow.FirstDepositAmount = p.Input.FirstDepositAmount;
+				modifyRow.FirstDepositOn = p.Input.FirstDepositOn;
+				modifyRow.WithdrawAmount = p.Input.WithdrawAmount;
+				modifyRow.WithdrawCount = p.Input.WithdrawCount;
+				modifyRow.WithdrawHandlingFee = p.Input.WithdrawHandlingFee;
+				modifyRow.FirstWithdrawHandlingFee = p.Input.FirstWithdrawHandlingFee;
+				modifyRow.FirstWithdrawAmount = p.Input.FirstWithdrawAmount;
+				modifyRow.FirstWithdrawOn = p.Input.FirstWithdrawOn;
+			}
+			else
+				_ = await tgsContext.HourPaymentStatistics
+					.AddAsync(p.Input, cancellationToken)
+					.ConfigureAwait(false);
 
 		tgsContext.HourPaymentStatistics.RemoveRange(rightJoin);
 

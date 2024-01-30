@@ -42,7 +42,7 @@ public class TgsRepositoryTests
 		var actual = await sut.GetUserFiveMinutesLastProcessTimeAsync();
 
 		// Assert
-		Assert.NotNull(actual);
+		_ = Assert.NotNull(actual);
 		Assert.Equal(processTime, actual);
 	}
 
@@ -74,7 +74,7 @@ public class TgsRepositoryTests
 		var actual = await sut.GetUserHourLastProcessTimeAsync();
 
 		// Assert
-		Assert.NotNull(actual);
+		_ = Assert.NotNull(actual);
 		Assert.Equal(processTime, actual);
 	}
 
