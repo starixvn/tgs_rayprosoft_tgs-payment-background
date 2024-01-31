@@ -16,3 +16,7 @@ message UpdatePaymentOverviewRequest {
 message FiveMinuteProcessRequest {
 	google.protobuf.Timestamp process_date = 1;
 }
+
+message FiveMinuteProcessedEvent {
+	google.protobuf.Timestamp process_date = 1;
+}

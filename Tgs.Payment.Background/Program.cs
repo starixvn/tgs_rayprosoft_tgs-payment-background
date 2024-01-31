@@ -60,6 +60,12 @@ var builder = WebApplication.CreateBuilder(args);
 		.AddMessageQueue()
 		.AddNatsMessageQueue(config => config
 			.ConfigureResolveConnection(sp => sp.GetRequiredKeyedService<NatsConnection>("Nats"))
+			.ConfigJetStream(new NATS.Client.JetStream.Models.StreamConfig("tgs_payment_background_5min", ["tgs.payment.background.event.5min"]) with
+			{
+				Storage = NATS.Client.JetStream.Models.StreamConfigStorage.File,
+				Retention = NATS.Client.JetStream.Models.StreamConfigRetention.Workqueue,
+				NumReplicas = builder.Configuration.GetValue<int>("Background:JetStreamNumReplicas")
+			})
 			.AddReplyHandler<PlayerDailyPaymentHandler>("tgs.payment.background.player", "tgs.payment.background.player")
 			.AddReplyHandler<AgentDailyPaymentHandler>("tgs.payment.background.agent", "tgs.payment.background.agent")
 			.AddReplyHandler<BrandDailyPaymentHandler>("tgs.payment.background.brand", "tgs.payment.background.brand")
@@ -68,6 +74,7 @@ var builder = WebApplication.CreateBuilder(args);
 				"tgs.payment.background.payment-overview.all")
 			.AddReplyHandler<FiveMinutesUserPaymentSummaryHandler>("tgs.payment.background.5min", "tgs.payment.background.5min")
 			.AddReplyHandler<HourUserPaymentSummaryHandler>("tgs.payment.background.hour", "tgs.payment.background.hour"))
+		.AddNatsJetStreamGlobPatternExchange("tgs.payment.background.event.5min")
 		.AddNatsGlobPatternExchange("*");
 
 	_ = builder.Services
