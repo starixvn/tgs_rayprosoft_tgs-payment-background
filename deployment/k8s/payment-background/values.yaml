@@ -91,3 +91,5 @@ affinity: {}
 
 cronjob:
   schedule: 0 21 * * *
+
+env: []

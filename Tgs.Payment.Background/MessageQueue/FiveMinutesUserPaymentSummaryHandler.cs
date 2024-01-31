@@ -1,10 +1,12 @@
-﻿using Tgs.Payment.Background.Protos;
+﻿using Google.Protobuf.WellKnownTypes;
+using Tgs.Payment.Background.Protos;
 using Valhalla.MessageQueue;
 
 namespace Tgs.Payment.Background.MessageQueue;
 
 internal class FiveMinutesUserPaymentSummaryHandler(
-	ITgsRepository tgsRepository)
+	ITgsRepository tgsRepository,
+	IMessageSender messageSender)
 	: IMessageHandler<FiveMinuteProcessRequest>
 {
 	public async ValueTask HandleAsync(
@@ -34,6 +36,16 @@ internal class FiveMinutesUserPaymentSummaryHandler(
 				await tgsRepository.UpsertFiveMinutesUserPaymentSummaryStatisticsAsync(
 					lastProcessTime,
 					summaries,
+					cancellationToken).ConfigureAwait(false);
+
+				var processedEvent = new FiveMinuteProcessedEvent
+				{
+					ProcessDate = Timestamp.FromDateTime(lastProcessTime.ToUniversalTime()),
+				};
+
+				await messageSender.PublishAsync(
+					"tgs.payment.background.event.5min",
+					processedEvent,
 					cancellationToken).ConfigureAwait(false);
 
 				lastProcessTime = nextTimePoint;

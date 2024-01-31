@@ -50,6 +50,9 @@ spec:
                 secretKeyRef:
                   name: tgs-connections
                   key: nats
+            {{- with .Values.env }}
+              {{- toYaml . | nindent 12 }}
+            {{- end }}
           ports:
             - name: http
               containerPort: 8080
