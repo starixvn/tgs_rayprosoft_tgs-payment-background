@@ -55,6 +55,7 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
             entity.Property(e => e.PaymentReturn)
             .HasColumnType("jsonb")
             .HasColumnName("payment_return");
+            entity.Property(e => e.PlayerRemark).HasColumnName("player_remark");
             entity.Property(e => e.Remark).HasColumnName("remark");
             entity.Property(e => e.ReviewedOn).HasColumnName("reviewed_on");
             entity.Property(e => e.ReviewedUserId).HasColumnName("reviewed_user_id");

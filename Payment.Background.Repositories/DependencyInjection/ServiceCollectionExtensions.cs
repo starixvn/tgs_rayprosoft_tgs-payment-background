@@ -11,6 +11,7 @@ public static class ServiceCollectionExtensions
 		this IServiceCollection services,
 		Action<IServiceProvider, DbContextOptionsBuilder>? dbOptionsAction = null)
 		=> services
+			.AddSerialNumberGenerator()
 			.AddDbContext<TgsContext>(dbOptionsAction)
 			.AddTransient<ITgsRepository, TgsRepository>();
 }
