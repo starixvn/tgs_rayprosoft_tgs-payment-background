@@ -9,6 +9,7 @@ using NSubstitute.Core;
 using Tgs.Payment.Background;
 using Tgs.Payment.Background.Repositories;
 using Tgs.Payment.Background.Repositories.Entities;
+using Tgs.SerialNumberGenerator;
 
 namespace Payment.Background.Repositories.UnitTests;
 
@@ -24,7 +25,10 @@ public class TgsRepositoryTests
 
 		var dbContext = new TgsContext(dbContextOptions);
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:40:00.0000000Z", "o", null).ToUniversalTime();
 		var settingRow = new BackgroundPaymentStatisticsSetting
@@ -56,7 +60,10 @@ public class TgsRepositoryTests
 
 		var dbContext = new TgsContext(dbContextOptions);
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
 		var settingRow = new BackgroundPaymentStatisticsSetting
@@ -88,7 +95,10 @@ public class TgsRepositoryTests
 
 		var dbContext = new TgsContext(dbContextOptions);
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:40:00.0000000Z", "o", null).ToUniversalTime();
 
@@ -112,7 +122,10 @@ public class TgsRepositoryTests
 
 		var dbContext = new TgsContext(dbContextOptions);
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
 
@@ -143,7 +156,10 @@ public class TgsRepositoryTests
 				(sp, _) => fakeCreateQueryExecutorWrapper);
 
 		var dbContext = new TgsContext(dbContextOptions);
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var start = DateTime.ParseExact("2024-01-17T14:40:00.0000000Z", "o", null).ToUniversalTime();
 		var end = start.AddMinutes(5D);
@@ -206,7 +222,10 @@ public class TgsRepositoryTests
 
 		var dbContext = new TgsContext(dbContextOptions);
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var timeRange = DateTime.ParseExact("2024-01-18T14:25:00.0000000Z", "o", null).ToUniversalTime();
 		var summaries = new[]
@@ -250,7 +269,10 @@ public class TgsRepositoryTests
 
 		using var dbContext = new TgsContext(dbContextOptions);
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var timeRange = DateTime.ParseExact("2024-01-18T14:25:00.0000000Z", "o", null).ToUniversalTime();
 		var summaries = new[]
@@ -314,8 +336,15 @@ public class TgsRepositoryTests
 			.Options;
 
 		using var dbContext = new TgsContext(dbContextOptions);
+		var fakeSerialNubmerGenerator = Substitute.For<ISerialNumberGenerator>();
 
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		_ = fakeSerialNubmerGenerator.GenerateAsync(Arg.Any<CancellationToken>())
+			.Returns(_ => Guid.NewGuid());
+
+		var sut = new TgsRepository(
+			dbContext,
+			fakeSerialNubmerGenerator,
+			NullLogger<TgsRepository>.Instance);
 
 		var timeRange = DateTime.ParseExact("2024-01-18T14:25:00.0000000Z", "o", null).ToUniversalTime();
 		var summaries = new[]
@@ -380,7 +409,10 @@ public class TgsRepositoryTests
 				(sp, _) => fakeCreateQueryExecutorWrapper);
 
 		using var dbContext = new TgsContext(dbContextOptions);
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
 
@@ -456,7 +488,10 @@ public class TgsRepositoryTests
 				(sp, _) => fakeCreateQueryExecutorWrapper);
 
 		var dbContext = new TgsContext(dbContextOptions);
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
 		var brandId = Guid.NewGuid();
@@ -556,7 +591,10 @@ public class TgsRepositoryTests
 				(sp, _) => fakeCreateQueryExecutorWrapper);
 
 		var dbContext = new TgsContext(dbContextOptions);
-		var sut = new TgsRepository(dbContext, NullLogger<TgsRepository>.Instance);
+		var sut = new TgsRepository(
+			dbContext,
+			Substitute.For<ISerialNumberGenerator>(),
+			NullLogger<TgsRepository>.Instance);
 
 		var processTime = DateTime.ParseExact("2024-01-17T14:00:00.0000000Z", "o", null).ToUniversalTime();
 		var brandId = Guid.NewGuid();

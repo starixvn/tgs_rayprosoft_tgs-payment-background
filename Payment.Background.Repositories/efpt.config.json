@@ -40,6 +40,10 @@
          "ObjectType": 0
       },
       {
+         "Name": "dbo.five_minutes_payment_statistics_delta",
+         "ObjectType": 0
+      },
+      {
          "Name": "dbo.hour_payment_statistics",
          "ObjectType": 0
       },

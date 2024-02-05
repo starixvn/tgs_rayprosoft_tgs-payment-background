@@ -60,4 +60,6 @@ public partial class WithdrawForm
     public string? UserName { get; set; }
 
     public int UserType { get; set; }
+
+    public string? PlayerRemark { get; set; }
 }
