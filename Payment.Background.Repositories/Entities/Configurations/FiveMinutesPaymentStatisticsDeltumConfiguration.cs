@@ -18,21 +18,21 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
             entity.ToTable("five_minutes_payment_statistics_delta", "dbo");
 
             entity.Property(e => e.Id)
-            .ValueGeneratedNever()
-            .HasColumnName("id");
+                .ValueGeneratedNever()
+                .HasColumnName("id");
             entity.Property(e => e.BrandId).HasColumnName("brand_id");
             entity.Property(e => e.DepositAmount).HasColumnName("deposit_amount");
             entity.Property(e => e.DepositCount)
-            .HasDefaultValue(0)
-            .HasColumnName("deposit_count");
+                .HasDefaultValue(0)
+                .HasColumnName("deposit_count");
             entity.Property(e => e.DepositHandlingFee).HasColumnName("deposit_handling_fee");
             entity.Property(e => e.TimePoint).HasColumnName("time_point");
             entity.Property(e => e.UserId).HasColumnName("user_id");
             entity.Property(e => e.UserType).HasColumnName("user_type");
             entity.Property(e => e.WithdrawAmount).HasColumnName("withdraw_amount");
             entity.Property(e => e.WithdrawCount)
-            .HasDefaultValue(0)
-            .HasColumnName("withdraw_count");
+                .HasDefaultValue(0)
+                .HasColumnName("withdraw_count");
             entity.Property(e => e.WithdrawHandlingFee).HasColumnName("withdraw_handling_fee");
 
             OnConfigurePartial(entity);

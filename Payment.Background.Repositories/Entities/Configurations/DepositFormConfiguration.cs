@@ -24,34 +24,34 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
             entity.HasIndex(e => e.PlayerCode, "ix_deposit_forms_playerCode");
 
             entity.Property(e => e.Id)
-            .ValueGeneratedNever()
-            .HasColumnName("id");
+                .ValueGeneratedNever()
+                .HasColumnName("id");
             entity.Property(e => e.ActualAmount)
-            .HasPrecision(18, 6)
-            .HasColumnName("actual_amount");
+                .HasPrecision(18, 6)
+                .HasColumnName("actual_amount");
             entity.Property(e => e.Amount)
-            .HasPrecision(18, 6)
-            .HasColumnName("amount");
+                .HasPrecision(18, 6)
+                .HasColumnName("amount");
             entity.Property(e => e.ApplyInfo)
-            .HasColumnType("jsonb")
-            .HasColumnName("apply_info");
+                .HasColumnType("jsonb")
+                .HasColumnName("apply_info");
             entity.Property(e => e.BrandId).HasColumnName("brand_id");
             entity.Property(e => e.BrandPaymentId).HasColumnName("brand_payment_id");
             entity.Property(e => e.CreatedOn)
-            .HasDefaultValueSql("now()")
-            .HasColumnName("created_on");
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_on");
             entity.Property(e => e.HandlingFee)
-            .HasPrecision(18, 6)
-            .HasColumnName("handling_fee");
+                .HasPrecision(18, 6)
+                .HasColumnName("handling_fee");
             entity.Property(e => e.OrderNo)
-            .HasMaxLength(50)
-            .HasColumnName("order_no");
+                .HasMaxLength(50)
+                .HasColumnName("order_no");
             entity.Property(e => e.PaymentReturn)
-            .HasColumnType("jsonb")
-            .HasColumnName("payment_return");
+                .HasColumnType("jsonb")
+                .HasColumnName("payment_return");
             entity.Property(e => e.PlayerCode)
-            .HasMaxLength(16)
-            .HasColumnName("player_code");
+                .HasMaxLength(16)
+                .HasColumnName("player_code");
             entity.Property(e => e.PromotionId).HasColumnName("promotion_id");
             entity.Property(e => e.PromotionPlayerId).HasColumnName("promotion_player_id");
             entity.Property(e => e.Remark).HasColumnName("remark");
@@ -60,16 +60,16 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
             entity.Property(e => e.ReviewedUserName).HasColumnName("reviewed_user_name");
             entity.Property(e => e.SnapshotEventId).HasColumnName("snapshot_event_id");
             entity.Property(e => e.Status)
-            .HasDefaultValue(0)
-            .HasColumnName("status");
+                .HasDefaultValue(0)
+                .HasColumnName("status");
             entity.Property(e => e.ThirdPartyOrderNo).HasColumnName("third_party_order_no");
             entity.Property(e => e.UpdatedOn)
-            .HasDefaultValueSql("now()")
-            .HasColumnName("updated_on");
+                .HasDefaultValueSql("now()")
+                .HasColumnName("updated_on");
 
             entity.HasOne(d => d.PlayerCodeNavigation).WithMany(p => p.DepositForms)
-            .HasForeignKey(d => d.PlayerCode)
-            .HasConstraintName("fk_deposit_forms_players_player_code");
+                .HasForeignKey(d => d.PlayerCode)
+                .HasConstraintName("fk_deposit_forms_players_player_code");
 
             OnConfigurePartial(entity);
         }
