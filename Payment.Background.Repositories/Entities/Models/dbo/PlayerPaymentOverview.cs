@@ -26,4 +26,8 @@ public partial class PlayerPaymentOverview
     public decimal TotalDepositAmount { get; set; }
 
     public decimal TotalWithdrawAmount { get; set; }
+
+    public int TotalDepositCount { get; set; }
+
+    public int TotalWithdrawCount { get; set; }
 }

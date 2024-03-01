@@ -26,7 +26,13 @@ namespace Tgs.Payment.Background.Repositories.Entities.Configurations
             entity.Property(e => e.FirstWithdrawOn).HasColumnName("first_withdraw_on");
             entity.Property(e => e.RecordedBy).HasColumnName("recorded_by");
             entity.Property(e => e.TotalDepositAmount).HasColumnName("total_deposit_amount");
+            entity.Property(e => e.TotalDepositCount)
+                .HasDefaultValue(0)
+                .HasColumnName("total_deposit_count");
             entity.Property(e => e.TotalWithdrawAmount).HasColumnName("total_withdraw_amount");
+            entity.Property(e => e.TotalWithdrawCount)
+                .HasDefaultValue(0)
+                .HasColumnName("total_withdraw_count");
 
             OnConfigurePartial(entity);
         }

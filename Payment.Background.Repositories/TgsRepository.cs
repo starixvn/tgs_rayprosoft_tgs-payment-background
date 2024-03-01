@@ -733,7 +733,9 @@ internal class TgsRepository(
 					player_code,
 					report_date,
 					total_deposit_amount,
+					total_deposit_count,
 					total_withdraw_amount,
+					total_withdraw_count,
 					first_deposit_amount,
 					first_deposit_handling_fee,
 					first_deposit_on,
@@ -746,7 +748,9 @@ internal class TgsRepository(
 						player_code,
 						report_date,
 						max(total_deposit_amount) OVER w AS "total_deposit_amount",
+						max(total_deposit_count) OVER w AS "total_deposit_count",
 						max(total_withdraw_amount) OVER w AS "total_withdraw_amount",
+						max(total_withdraw_count) OVER w AS "total_withdraw_count",
 						min(first_deposit_amount) OVER w AS "first_deposit_amount",
 						min(first_deposit_handling_fee) OVER w AS "first_deposit_handling_fee",
 						min(first_deposit_on) OVER w AS "first_deposit_on",
@@ -762,7 +766,9 @@ internal class TgsRepository(
 				SELECT
 					player_code,
 					COALESCE(total_deposit_amount, 0) AS "total_deposit_amount",
+					coalesce(total_deposit_count, 0) AS "total_deposit_count",
 					COALESCE(total_withdraw_amount, 0) AS "total_withdraw_amount",
+					coalesce(total_withdraw_count, 0) AS "total_withdraw_count",
 					first_deposit_amount,
 					first_deposit_handling_fee,
 					first_deposit_on,
@@ -787,7 +793,9 @@ internal class TgsRepository(
 				cancellationToken).ConfigureAwait(false)).Entity;
 
 		updateOverview.TotalDepositAmount = updateStatistics.TotalDepositAmount;
+		updateOverview.TotalDepositCount = updateStatistics.TotalDepositCount;
 		updateOverview.TotalWithdrawAmount = updateStatistics.TotalWithdrawAmount;
+		updateOverview.TotalWithdrawCount = updateStatistics.TotalWithdrawCount;
 		updateOverview.FirstDepositAmount = updateStatistics.FirstDepositAmount;
 		updateOverview.FirstDepositHandlingFee = updateStatistics.FirstDepositHandlingFee;
 		updateOverview.FirstDepositOn = updateStatistics.FirstDepositOn;
