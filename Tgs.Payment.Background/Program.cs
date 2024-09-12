@@ -16,6 +16,8 @@ using Tgs.Payment.Background.Models;
 
 var builder = WebApplication.CreateBuilder(args);
 {
+
+	_ = builder.WebHost.UseSentry();
 	_ = builder.Logging
 		.AddOpenTelemetry(options =>
 		{
